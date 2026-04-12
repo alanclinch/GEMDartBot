@@ -92,31 +92,80 @@ function humanAvatarSVG(color, size = 34) {
 
 // ── CPU THROW GENERATOR ──────────────────────────────────────
 // Produces a fake segment object simulating a throw at `target`
-// with accuracy scaled by `mpr` (0.9 = beginner, 6.0 = machine).
+// with accuracy scaled by `mpr` (0.9 = beginner, 6.0 = elite).
 //
-// Maths — all probabilities derived from target MPR so bots play
-// at their named level. Includes treble, double, and single beds.
-//
+// Core maths (same as before — guarantees E[marks/dart] = mpr/3):
 //   accuracy    = (mpr - 0.9) / 5.1                 → 0..1
-//   singleFrac  = 0.70 - accuracy × 0.60  (min 0.10) → share of scoring darts that are singles
-//   doubleFrac  = 0.15 + accuracy × 0.05             → share that are doubles (~15-20%)
-//   tripleFrac  = 1 - singleFrac - doubleFrac         → share that are trebles
-//   avgMarks    = tripleFrac×3 + doubleFrac×2 + singleFrac×1
-//   scoringChance = (mpr/3) / avgMarks               → P(dart scores any mark)
+//   singleFrac  = 0.70 - accuracy × 0.60  (min 0.10)
+//   doubleFrac  = 0.15 + accuracy × 0.05
+//   tripleFrac  = 1 - singleFrac - doubleFrac
+//   scoringChance = (mpr/3) / avgMarks               → P(dart scores a mark)
 //
-//   E[marks/dart] = scoringChance × avgMarks = mpr/3  ✓
+// Three modifiers applied on top (all preserve long-run MPR):
 //
-// Verified (old marks/dart → new):
-//   Danny McRae  0.9 MPR:  0.56 → 0.30
-//   Wee Shuggy   1.4 MPR:  0.75 → 0.47
-//   Carol Minto  1.9 MPR:  0.94 → 0.63
-function generateCpuThrow(target, mpr) {
-  const accuracy    = (mpr - 0.9) / 5.1;
-  const singleFrac  = Math.max(0.70 - accuracy * 0.60, 0.10);
-  const doubleFrac  = 0.15 + accuracy * 0.05;
-  const tripleFrac  = 1 - singleFrac - doubleFrac;
-  const avgMarks    = tripleFrac * 3 + doubleFrac * 2 + singleFrac * 1;
-  const scoringChance = (mpr / 3) / avgMarks;
+//   opts.roundForm   (default 1.0) — per-round hot/cold factor, caller
+//                    draws once per turn from a range centred at 1.0.
+//                    Wider range for low-skill bots (more streaky).
+//
+//   opts.missStreak  (default 0) — consecutive non-cricket darts so far.
+//                    Each miss adds a tiny recovery bonus (self-correcting;
+//                    resets to 0 on any cricket hit).
+//
+//   opts.prevSeg     (default null) — segment object from the previous dart
+//                    in the same turn. If that dart landed in the same tight
+//                    bed (treble or bull), apply a clustering penalty — a dart
+//                    already there physically blocks the same spot.
+//
+function generateCpuThrow(target, mpr, opts) {
+  opts = opts || {};
+  const prevSeg    = opts.prevSeg    || null;
+  const missStreak = opts.missStreak || 0;
+  const roundForm  = opts.roundForm  || 1.0;
+
+  const accuracy = (mpr - 0.9) / 5.1;
+
+  // ── Distribution fractions (scoring darts only) ──
+  let singleFrac = Math.max(0.70 - accuracy * 0.60, 0.10);
+  let doubleFrac = 0.15 + accuracy * 0.05;
+  let tripleFrac = 1 - singleFrac - doubleFrac;
+
+  // ── Clustering: shift away from the crowded bed ──
+  // If the previous dart in this turn hit the same target's treble (or bull),
+  // a dart is already in that tiny area — shift probability toward singles.
+  const clusterHit = prevSeg && prevSeg.number === target &&
+    (prevSeg.bed === 'Triple' || (target === 25 && prevSeg.bed === 'Single'));
+  if (clusterHit) {
+    const shift = 0.12 - accuracy * 0.10; // 0.12 beginner → 0.02 elite
+    if (target !== 25) {
+      // Treble clustering: move triple → single
+      tripleFrac = Math.max(0, tripleFrac - shift);
+      singleFrac = Math.min(0.95, singleFrac + shift);
+    } else {
+      // Bull clustering: reduce both hit beds, spread to adj/miss
+      doubleFrac = Math.max(0, doubleFrac - shift * 0.5);
+      singleFrac = Math.max(0, singleFrac - shift * 0.5);
+    }
+    const tot = tripleFrac + doubleFrac + singleFrac;
+    if (tot > 0) { tripleFrac /= tot; doubleFrac /= tot; singleFrac /= tot; }
+  }
+
+  const avgMarks = tripleFrac * 3 + doubleFrac * 2 + singleFrac * 1;
+
+  // ── Base scoring chance from target MPR ──
+  let scoringChance = (mpr / 3) / avgMarks;
+
+  // ── Round form: hot/cold variance ──
+  scoringChance *= roundForm;
+
+  // ── Miss momentum: consecutive wasted darts raise next-dart chance ──
+  // Self-correcting: as soon as a dart hits, missStreak resets to 0.
+  const maxBonus = 0.20 - accuracy * 0.12; // 0.20 beginner, 0.08 elite
+  scoringChance += Math.min(missStreak * 0.04, maxBonus);
+
+  // ── Overall clustering reduction (dart physically in the way) ──
+  if (clusterHit) scoringChance *= (1 - (0.06 - accuracy * 0.05));
+
+  scoringChance = Math.max(0, Math.min(0.95, scoringChance));
 
   const tripleChance = scoringChance * tripleFrac;
   const doubleChance = scoringChance * doubleFrac;
@@ -129,7 +178,7 @@ function generateCpuThrow(target, mpr) {
   let num, mul;
 
   if (r < tripleChance) {
-    // Treble — or inner bull (counts as 2 marks) for target 25
+    // Treble — or inner bull (2 marks) for target 25
     num = target;
     mul = target === 25 ? 2 : 3;
   } else if (r < tripleChance + doubleChance) {
@@ -137,19 +186,15 @@ function generateCpuThrow(target, mpr) {
     num = target;
     mul = target === 25 ? 1 : 2;
   } else if (r < tripleChance + doubleChance + singleChance) {
-    // Single of target
     num = target;
     mul = 1;
   } else if (r < tripleChance + doubleChance + singleChance + adjChance) {
-    // Adjacent number — almost always non-cricket, realistic scatter
     const adj = getAdjacentNumbers(target);
     num = adj[Math.floor(Math.random() * adj.length)];
     mul = 1;
   } else if (r < tripleChance + doubleChance + singleChance + adjChance + missChance) {
-    // Off-board miss
     return null;
   } else {
-    // Wasted dart — non-cricket number (1–14)
     const nonCricket = [1,2,3,4,5,6,7,8,9,10,11,12,13,14];
     num = nonCricket[Math.floor(Math.random() * nonCricket.length)];
     mul = 1;

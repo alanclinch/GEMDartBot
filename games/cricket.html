@@ -225,6 +225,26 @@ body{
 }
 .cpu-modal-cancel:hover{border-color:var(--red);color:var(--red);}
 
+/* Recent saved players */
+.recent-players{
+  margin-top:10px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  min-height:0;
+}
+.recent-label{
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);margin-right:2px;
+}
+.recent-chip{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:20px;padding:5px 12px;
+  color:var(--text);font-family:'Exo 2',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;gap:5px;
+}
+.recent-chip:hover{border-color:var(--green);color:var(--green);}
+.chip-stat{font-size:9px;color:var(--muted);font-weight:400;}
+
 /* WS status */
 .ws-row{display:flex;align-items:center;gap:8px;}
 .ws-dot{width:8px;height:8px;border-radius:50%;background:#222;transition:background .3s;flex-shrink:0;}
@@ -550,6 +570,7 @@ body{
       <button class="add-btn" id="add-human-btn" onclick="addHumanPlayer()">+ Human Player</button>
       <button class="add-btn" id="add-cpu-btn" onclick="openCpuModal()">+ Computer Player</button>
     </div>
+    <div id="recent-players" class="recent-players"></div>
   </div>
 
   <div class="setup-card">
@@ -674,6 +695,34 @@ function exitFullscreen(){
 }
 
 // =============================================
+// LOCAL STORAGE — player persistence
+// Schema: { "name": { games, wins, marks, darts } }
+// Future: mirror to Neon (serverless Postgres) via API
+// =============================================
+const LS_KEY = 'dartbot_players';
+
+function getSavedPlayers(){
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function savePlayerStat(name, won, marksThrown, dartsThrown){
+  const all = getSavedPlayers();
+  if(!all[name]) all[name] = { games:0, wins:0, marks:0, darts:0 };
+  all[name].games++;
+  if(won) all[name].wins++;
+  all[name].marks += marksThrown;
+  all[name].darts += dartsThrown;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch {}
+}
+
+function savedMPR(stats){
+  return stats.darts > 0
+    ? (stats.marks / (stats.darts / 3)).toFixed(1)
+    : '—';
+}
+
+// =============================================
 // GAME CONFIG
 // =============================================
 const NUMBERS = [20,19,18,17,16,15,25]; // 25 = Bull
@@ -767,7 +816,7 @@ function addHumanPlayer(){
   humanCount++;
   const name = `Player ${humanCount}`;
   const color = PLAYER_COLORS[players.length % 6];
-  players.push({name, color, isCpu:false, cpuData:null, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0});
+  players.push({name, color, isCpu:false, cpuData:null, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0, cpuMissStreak:0});
   renderPlayerList();
   checkStartBtn();
   // Focus and select the new name field so user can type immediately
@@ -782,7 +831,7 @@ function addCpuPlayer(id){
   const cpu = CPU_PLAYERS.find(c => c.id === id);
   if(!cpu) return;
   const color = PLAYER_COLORS[players.length % 6];
-  players.push({name:cpu.name, color, isCpu:true, cpuData:cpu, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0});
+  players.push({name:cpu.name, color, isCpu:true, cpuData:cpu, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0, cpuMissStreak:0});
   closeCpuModal();
   renderPlayerList();
   checkStartBtn();
@@ -791,6 +840,7 @@ function addCpuPlayer(id){
 function removePlayer(idx){
   players.splice(idx,1);
   renderPlayerList();
+  renderRecentPlayers();
   checkStartBtn();
 }
 
@@ -816,9 +866,42 @@ function renderPlayerList(){
   const maxed = players.length >= 4;
   document.getElementById('add-human-btn').disabled = maxed;
   document.getElementById('add-cpu-btn').disabled = maxed;
+  renderRecentPlayers();
 }
 
 // humanAvatarSVG — from bots.js
+
+function renderRecentPlayers(){
+  const saved = getSavedPlayers();
+  const usedNames = new Set(players.filter(p => !p.isCpu).map(p => p.name));
+  const suggestions = Object.keys(saved)
+    .filter(n => !usedNames.has(n))
+    .slice(0, 6);
+
+  const el = document.getElementById('recent-players');
+  if(!el) return;
+  if(!suggestions.length){ el.innerHTML = ''; return; }
+
+  el.innerHTML = '<span class="recent-label">Recent:</span>' +
+    suggestions.map(n => {
+      const s = saved[n];
+      const mpr = savedMPR(s);
+      const record = `${s.wins}W / ${s.games - s.wins}L`;
+      return `<button class="recent-chip" onclick="addSavedPlayer(this, '${n.replace(/'/g,"\\'")}')">
+        ${n}<span class="chip-stat">${mpr} MPR · ${record}</span>
+      </button>`;
+    }).join('');
+}
+
+function addSavedPlayer(btn, name){
+  if(players.length >= 4) return;
+  const color = PLAYER_COLORS[players.length % 6];
+  humanCount++;
+  players.push({name, color, isCpu:false, cpuData:null, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0, cpuMissStreak:0});
+  renderPlayerList();
+  renderRecentPlayers();
+  checkStartBtn();
+}
 
 function checkStartBtn(){
   document.getElementById('start-btn').disabled = players.length < 2;
@@ -846,6 +929,7 @@ function launchLeg(){
     p.marks = {20:0,19:0,18:0,17:0,16:0,15:0,25:0};
     p.dartsThrown = 0;
     p.marksThrown = 0;
+    p.cpuMissStreak = 0; // reset between legs
   });
   currentPlayer = startingPlayer;
   currentDarts = [];
@@ -1179,43 +1263,67 @@ function registerDart(seg){
 // =============================================
 // CPU TURN
 // =============================================
+// Cricket numbers for miss-streak tracking
+const CRICKET_SET = new Set([15,16,17,18,19,20,25]);
+
 function runCpuTurn(){
   if(!gameActive) return;
-  throwCpuDart(0, () => {
-    setTimeout(() => throwCpuDart(1, () => {
-      setTimeout(() => throwCpuDart(2, () => {
+  const p   = players[currentPlayer];
+  const cpu = p.cpuData;
+  const accuracy = (cpu.mpr - 0.9) / 5.1;
+
+  // Round form: computed once per turn so all 3 darts share the same
+  // hot/cold streak. Wide range for beginners, tight for elite.
+  const formRange = 0.35 - accuracy * 0.25; // 0.35 → 0.10
+  const roundForm = Math.max(0.3, Math.min(2.5,
+    1 + (Math.random() * 2 - 1) * formRange
+  ));
+
+  let prevSeg = null; // reset each turn; missStreak carries across turns
+
+  function doThrow(dartN, cb){
+    if(!gameActive || turnEnded){ cb && cb(); return; }
+    const target = getBestTarget(p);
+    const seg = generateCpuThrow(target, cpu.mpr, {
+      prevSeg,
+      missStreak: p.cpuMissStreak,
+      roundForm,
+    });
+
+    // Update persistent miss streak on this CPU player
+    const hitCricket = seg && CRICKET_SET.has(seg.number);
+    p.cpuMissStreak = hitCricket ? 0 : p.cpuMissStreak + 1;
+    prevSeg = seg;
+
+    registerDart(seg);
+    cb && cb();
+  }
+
+  doThrow(0, () => {
+    setTimeout(() => doThrow(1, () => {
+      setTimeout(() => doThrow(2, () => {
         setTimeout(() => advanceTurn(), 1200);
       }), 2000);
     }), 2000);
   });
 }
 
-function throwCpuDart(dartN, cb){
-  if(!gameActive || turnEnded){ cb && cb(); return; }
-  const p = players[currentPlayer];
-  const cpu = p.cpuData;
-  const target = getBestTarget(p);
-  const seg = generateCpuThrow(target, cpu.mpr);
-  registerDart(seg);
-  if(turnEnded && dartN < 2){ cb && cb(); return; }
-  cb && cb();
-}
-
 // generateCpuThrow, getAdjacentNumbers — from bots.js
 
 function getBestTarget(p){
-  // Priority: open numbers from high to low, then score on open enemy numbers
-  // Prefer numbers we haven't closed and are highest value
+  // Priority 1: close numbers highest-first, bull saved for last
+  // (bull is hardest to hit — close 20→15 first to maximise scoring,
+  //  then finish with bull as described in standard cricket strategy)
   const open = NUMBERS.filter(n => p.marks[n] < 3).sort((a,b) => {
-    // Bull = 25, treat as mid-priority for targeting
-    const va = a===25?22:a, vb = b===25?22:b;
-    return vb - va;
+    const va = a === 25 ? -1 : a;  // bull sorts to bottom
+    const vb = b === 25 ? -1 : b;
+    return vb - va;  // descending: 20, 19, 18, 17, 16, 15, bull
   });
   if(open.length > 0) return open[0];
-  // All closed — aim at highest scoring number where others are open
+  // Priority 2: all closed — score on highest open enemy number
   const scoring = NUMBERS.filter(n => {
-    return p.marks[n] >= 3 && players.some((op,i) => i!==currentPlayer && op.marks[n] < 3);
-  }).sort((a,b) => b-a);
+    return p.marks[n] >= 3 && players.some((op,i) => i !== currentPlayer && op.marks[n] < 3);
+  }).sort((a,b) => b - a);
   return scoring[0] || 20;
 }
 
@@ -1264,6 +1372,11 @@ function endWithWinner(idx){
       <div class="win-other-score">Score ${p.score} · MPR ${mprOf(p)}</div>
     </div>`)
     .join('');
+
+  // Save stats for human players
+  players.forEach((p, i) => {
+    if(!p.isCpu) savePlayerStat(p.name, i === idx, p.marksThrown, p.dartsThrown);
+  });
 
   spawnConfetti();
   showScreen('winner');
@@ -1345,10 +1458,10 @@ document.addEventListener('keydown', e => {
 // =============================================
 document.addEventListener('DOMContentLoaded', () => {
   buildCpuGrid();
-  addHumanPlayer(); // start with one human
+  addHumanPlayer(); // start with one human (focuses name input)
+  renderRecentPlayers();
   initSpeech();
   initAutodarts(handleWS);
-  // Responsive scoreboard sizing
   window.addEventListener('resize', () => { if(gameActive) updateScoreboard(); });
 });
 </script>
