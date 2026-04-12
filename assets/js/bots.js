@@ -90,24 +90,51 @@ function humanAvatarSVG(color, size = 34) {
 // ── CPU THROW GENERATOR ──────────────────────────────────────
 // Produces a fake segment object simulating a throw at `target`
 // with accuracy scaled by `mpr` (0.9 = beginner, 6.0 = machine).
+//
+// The maths — every probability is derived from the target MPR so
+// the bot actually plays at the named skill level:
+//
+//   accuracy        = (mpr - 0.9) / 5.1           → 0..1
+//   trebleFraction  = 0.10 + accuracy × 0.65       → how much of all scoring darts are trebles
+//   scoreFactor     = 2 × trebleFraction + 1        → avg marks per scoring dart (1.2 → 2.5)
+//   scoringChance   = (mpr / 3) / scoreFactor       → P(dart scores any mark)
+//   tripleChance    = scoringChance × trebleFraction
+//   singleChance    = scoringChance × (1 - trebleFraction)
+//
+// This guarantees: E[marks per dart] = tripleChance×3 + singleChance×1 = mpr/3  ✓
+//
+// Verified for the three easiest bots (old → new marks/dart):
+//   Danny McRae  0.9 MPR:  0.56 → 0.30
+//   Wee Shuggy   1.4 MPR:  0.75 → 0.47
+//   Carol Minto  1.9 MPR:  0.94 → 0.63
 function generateCpuThrow(target, mpr) {
-  const accuracy = (mpr - 0.9) / 5.1;              // normalised 0..1
-  const hitChance    = 0.12 + accuracy * 0.62;      // 0.12→0.74  treble/bull hit
-  const singleChance = 0.30 + accuracy * 0.15;      // 0.30→0.45  single of target
+  const accuracy       = (mpr - 0.9) / 5.1;
+  const trebleFraction = 0.10 + accuracy * 0.65;   // 0.10 (beginner) → 0.75 (machine)
+  const scoreFactor    = 2 * trebleFraction + 1;    // avg marks per scoring dart
+  const scoringChance  = (mpr / 3) / scoreFactor;   // P(hits target for marks)
+  const tripleChance   = scoringChance * trebleFraction;
+  const singleChance   = scoringChance * (1 - trebleFraction);
+  const adjChance      = 0.15 - accuracy * 0.09;   // 0.15 (beginner) → 0.06 (machine)
+  const missChance     = 0.08 - accuracy * 0.07;   // 0.08 (beginner) → 0.01 (machine)
+  // remainder = wasted dart on non-cricket number
 
   const r = Math.random();
   let num, mul;
 
-  if (r < hitChance) {
-    // Hit target — treble (or bull/double-bull)
+  if (r < tripleChance) {
+    // Hit treble (or double bull for target 25)
     num = target;
-    mul = target === 25 ? (Math.random() < 0.5 ? 2 : 1) : 3;
-  } else if (r < hitChance + singleChance) {
-    // Single of target or adjacent number
-    const adj = getAdjacentNumbers(target);
-    num = Math.random() < 0.65 ? target : adj[Math.floor(Math.random() * adj.length)];
+    mul = target === 25 ? 2 : 3;
+  } else if (r < tripleChance + singleChance) {
+    // Hit single of target
+    num = target;
     mul = 1;
-  } else if (r < hitChance + singleChance + 0.1) {
+  } else if (r < tripleChance + singleChance + adjChance) {
+    // Hit adjacent number — almost always non-cricket (0 marks), but realistic scatter
+    const adj = getAdjacentNumbers(target);
+    num = adj[Math.floor(Math.random() * adj.length)];
+    mul = 1;
+  } else if (r < tripleChance + singleChance + adjChance + missChance) {
     // Off-board miss
     return null;
   } else {
