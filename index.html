@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DartBot — Autodarts Games</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/game.css">
+<script src="assets/js/autodarts.js"></script>
+<style>
+:root {
+  --bg: #0a0e0a;
+  --surface: #111811;
+  --border: #2a3a2a;
+  --gold: #f0c040;
+  --gold2: #a07818;
+  --green: #40e880;
+  --text: #e8f0e8;
+  --muted: #608060;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  overflow-y: auto;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(40,160,40,.12), transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(20,80,160,.12), transparent 55%);
+}
+
+/* ── HEADER ─── */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 32px;
+  text-align: center;
+}
+
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(40px, 8vw, 88px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 4px 0 var(--gold2), 0 0 60px rgba(240,192,64,.35);
+  letter-spacing: 4px;
+}
+
+.tagline {
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.ws-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 20px;
+}
+
+/* ── GAME CARDS ─── */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+  gap: 24px;
+  justify-content: center;
+  padding: 0 24px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.game-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all .2s;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--card-accent, var(--gold));
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.game-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-accent, var(--gold));
+  box-shadow: 0 16px 48px rgba(0,0,0,.6), 0 0 0 1px var(--card-accent, var(--gold));
+}
+
+.game-card:hover::before { opacity: 1; }
+
+.card-icon {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.card-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--card-accent, var(--gold));
+}
+
+.card-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(232,240,232,.6);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.45);
+}
+
+.tag.accent {
+  border-color: var(--card-accent, var(--gold));
+  color: var(--card-accent, var(--gold));
+}
+
+.card-play {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--card-accent, var(--gold));
+  opacity: .7;
+  transition: opacity .2s;
+}
+
+.game-card:hover .card-play { opacity: 1; }
+
+/* ── FOOTER ─── */
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<div id="confetti"></div>
+
+<header class="header">
+  <div class="logo">🎯 DARTBOT</div>
+  <div class="tagline">Autodarts Game Launcher</div>
+  <div class="ws-bar">
+    <div class="ws-dot" id="setup-ws-dot"></div>
+    <span id="setup-ws-label">Autodarts: Not Connected</span>
+  </div>
+</header>
+
+<main class="games-grid">
+
+  <a class="game-card" href="games/cricket.html" style="--card-accent:#40c860;">
+    <div class="card-icon">🏏</div>
+    <div class="card-title">Cricket</div>
+    <div class="card-desc">
+      Close numbers 15–20 and Bull. Score points on closed numbers to win.
+      Play Standard, Cut-Throat, or No-Score variants against humans or CPU.
+    </div>
+    <div class="card-tags">
+      <span class="tag accent">1–6 players</span>
+      <span class="tag accent">CPU opponents</span>
+      <span class="tag">Standard · Cut-Throat · No-Score</span>
+    </div>
+    <div class="card-play">Play Now <span>▶</span></div>
+  </a>
+
+  <a class="game-card" href="games/Demolition.html" style="--card-accent:#ff40b0;">
+    <div class="card-icon">💥</div>
+    <div class="card-title">Demolition</div>
+    <div class="card-desc">
+      Race to demolish your gem tower by scoring points. Hit exactly zero to
+      check out — bust and your score resets. Last player to check out loses!
+    </div>
+    <div class="card-tags">
+      <span class="tag accent">2–6 players</span>
+      <span class="tag">Adjustable score &amp; multiplier</span>
+      <span class="tag">Sudden Death tiebreak</span>
+    </div>
+    <div class="card-play">Play Now <span>▶</span></div>
+  </a>
+
+  <a class="game-card" href="games/Snakes and Ladders.html" style="--card-accent:#40d0c0;">
+    <div class="card-icon">🐍</div>
+    <div class="card-title">Snakes &amp; Ladders</div>
+    <div class="card-desc">
+      Classic board game powered by darts. Each ring maps to a die face —
+      land on snakes to slide down, ladders to climb up. First to square 65 wins!
+    </div>
+    <div class="card-tags">
+      <span class="tag accent">1–6 players</span>
+      <span class="tag">Ring = die face (1–6)</span>
+      <span class="tag">Named snakes &amp; ladders</span>
+    </div>
+    <div class="card-play">Play Now <span>▶</span></div>
+  </a>
+
+</main>
+
+<footer class="footer">
+  DartBot · Local play via Autodarts · No internet required
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initAutodarts(() => {}); // keep WS dot live on home screen
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+/* ═══════════════════════════════════════════════════════════
+   game.css — Shared structural CSS for all DartBot games
+   Each game keeps its own :root colour variables and unique
+   layout CSS. Only truly universal patterns live here.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── RESET ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── SCREEN SYSTEM ──────────────────────────────────────────── */
+/* One full-viewport div per major view; only .active is shown. */
+.screen { display: none; width: 100vw; height: 100vh; }
+.screen.active { display: flex; }
+
+/* ── WEBSOCKET STATUS DOT ───────────────────────────────────── */
+.ws-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #444;
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.ws-dot.on {
+  background: #40e880;
+  box-shadow: 0 0 8px #40e880;
+}
+
+/* ── CONFETTI ───────────────────────────────────────────────── */
+#confetti {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 500;
+}
+.cf {
+  position: absolute;
+  top: -20px;
+  animation: cfall linear infinite;
+  border-radius: 2px;
+}
+@keyframes cfall {
+  0%   { transform: translateY(0)     rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── WIN ANIMATIONS (used by .win-card across games) ─────────── */
+@keyframes winPop {
+  from { transform: scale(.7); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-10px); }
+}
+
+/* ── SCROLLBAR (webkit) ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+/* ── PLAYER SETUP ROWS (shared pattern) ─────────────────────── */
+.player-input {
+  flex: 1;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  color: inherit;
+  font-size: 15px; font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .2s;
+}
+.player-input:focus { border-color: var(--gold, #f0c040); }
+
+.remove-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.4);
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.remove-btn:hover { border-color: var(--red, #e04040); color: var(--red, #e04040); }

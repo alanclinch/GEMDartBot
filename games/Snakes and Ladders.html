@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐍 Snakes &amp; Ladders — Autodarts</title>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/game.css">
+<script src="../assets/js/autodarts.js"></script>
+<script src="../assets/js/utils.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1a1a0a; --surface: #252510; --surface2: #2e2e15;
+  --border: #4a4a20; --gold: #f0c040; --gold2: #a07818;
+  --red: #e84040; --green: #40c060; --text: #f0ecd0;
+  --muted: #908860; --panel: #181808;
+  --yellow-light: #f5e060; --yellow-dark: #e8cc20;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* SETUP */
+#setup {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: radial-gradient(ellipse at 50% 30%, #2a2a10, #0a0a00);
+}
+.setup-logo h1 {
+  font-family: 'Righteous', sans-serif;
+  font-size: clamp(40px,7vw,80px);
+  color: var(--gold);
+  text-shadow: 0 4px 0 var(--gold2), 0 0 40px rgba(240,192,64,.4);
+  letter-spacing: 3px;
+  text-align: center;
+}
+.setup-logo p { font-size:14px; letter-spacing:4px; color:var(--muted); text-align:center; margin-top:4px; text-transform:uppercase; }
+.setup-card {
+  background: rgba(37,37,16,.9);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 40px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.setup-card h2 { font-family:'Righteous',sans-serif; font-size:18px; color:var(--gold); letter-spacing:2px; margin-bottom:16px; text-transform:uppercase; }
+.player-list { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.player-row { display:flex; gap:8px; align-items:center; }
+.color-dot { width:26px; height:26px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.3); }
+/* .player-input, .remove-btn — from game.css */
+.player-input { font-family:'Nunito',sans-serif; font-size:16px; } /* font override */
+.add-btn {
+  width:100%; background:none; border:2px dashed rgba(255,255,255,.2); color:rgba(255,255,255,.4);
+  padding:9px; border-radius:8px; cursor:pointer; font-family:'Nunito',sans-serif;
+  font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; transition:all .15s;
+}
+.add-btn:hover { border-color:var(--gold); color:var(--gold); }
+.dice-legend {
+  background:rgba(0,0,0,.3); border-radius:8px; padding:18px 20px;
+  margin:16px 0; display:flex; flex-direction:column; gap:8px;
+}
+.dice-legend .legend-row { display:flex; align-items:center; gap:14px; }
+.dice-legend .legend-die { font-size:28px; width:36px; text-align:center; flex-shrink:0; }
+.dice-legend .legend-txt { font-size:22px; font-weight:700; color:white; }
+.dice-legend .legend-note { font-size:15px; color:rgba(255,255,255,0.45); margin-top:4px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); }
+.start-btn {
+  width:100%; background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:none; color:#111; font-family:'Righteous',sans-serif;
+  font-size:22px; letter-spacing:3px; padding:16px; border-radius:10px;
+  cursor:pointer; transition:all .2s; text-transform:uppercase;
+  box-shadow:0 5px 0 var(--gold2), 0 8px 24px rgba(240,192,64,.3);
+}
+.start-btn:hover { transform:translateY(-2px); box-shadow:0 7px 0 var(--gold2),0 12px 32px rgba(240,192,64,.4); }
+.ws-status { font-size:12px; letter-spacing:2px; color:var(--muted); display:flex; align-items:center; gap:8px; text-transform:uppercase; }
+/* .ws-dot — from game.css */
+
+/* GAME SCREEN */
+#game {
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Board area — takes remaining space */
+.board-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #1a1a08;
+  overflow: hidden;
+}
+
+.board-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#board-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.7));
+}
+
+/* Side panel */
+.side-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-top {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,.3);
+}
+
+.panel-title {
+  font-family: 'Righteous', sans-serif;
+  font-size: 20px;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.panel-ws {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+/* Dice display */
+
+
+
+
+
+
+  40% { transform:rotate(12deg) scale(1.1); }
+  70% { transform:rotate(-6deg) scale(1.04); }
+  100% { transform:rotate(0) scale(1); }
+}
+
+
+
+
+
+/* Players list */
+.players-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-card {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.player-card.active {
+  border-color: var(--gold);
+  background: rgba(240,192,64,.07);
+  box-shadow: 0 0 16px rgba(240,192,64,.15);
+}
+
+.player-card.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gold);
+}
+
+.pc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.pc-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900; color: white; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.3);
+}
+
+.pc-name { flex:1; font-weight:900; font-size:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pc-square { font-family:'Righteous',sans-serif; font-size:30px; font-weight:900; }
+.pc-darts { display:flex; gap:4px; padding-left:34px; flex-wrap:wrap; }
+.dart-pip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  transition: all .2s;
+}
+.dart-pip.filled { border-color:var(--gold); color:var(--gold); background:rgba(240,192,64,.08); }
+.pc-status { font-size:11px; color:var(--muted); padding-left:34px; margin-top:2px; }
+.pc-status.snake { color:var(--red); }
+.pc-status.ladder { color:var(--green); }
+
+/* Turn banner */
+.turn-banner {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.turn-name {
+  font-family: 'Righteous', sans-serif;
+  font-size: 24px;
+  letter-spacing: 2px;
+  transition: color .3s;
+}
+
+.turn-sub { font-size: 16px; color: white; letter-spacing: 1px; margin-top: 4px; }
+
+.quit-btn {
+  display:block; margin:8px 12px;
+  background:none; border:1px solid var(--border); color:var(--muted);
+  font-family:'Nunito',sans-serif; font-size:12px; letter-spacing:2px;
+  text-transform:uppercase; padding:7px; border-radius:6px;
+  cursor:pointer; width:calc(100% - 24px); transition:all .15s;
+}
+.quit-btn:hover { color:var(--text); border-color:rgba(255,255,255,.3); }
+
+/* WIN OVERLAY */
+#win-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.win-card {
+  background: var(--surface);
+  border: 3px solid var(--gold);
+  border-radius: 20px;
+  padding: 48px 64px;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(240,192,64,.25);
+  animation: winPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* @keyframes winPop, bounce — from game.css */
+.win-trophy { font-size:72px; display:block; margin-bottom:12px; animation:bounce 1s ease-in-out infinite; }
+.win-label { font-size:12px; letter-spacing:4px; text-transform:uppercase; color:var(--muted); }
+.win-name { font-family:'Righteous',sans-serif; font-size:clamp(36px,6vw,72px); letter-spacing:3px; margin:8px 0 4px; text-shadow:0 0 40px currentColor; }
+.win-sub { font-size:14px; color:var(--muted); letter-spacing:2px; margin-bottom:28px; }
+.win-btns { display:flex; gap:12px; justify-content:center; }
+.btn-gold {
+  background:linear-gradient(135deg,var(--gold),var(--gold2)); border:none;
+  color:#111; font-family:'Righteous',sans-serif; font-size:18px; letter-spacing:2px;
+  padding:13px 32px; border-radius:10px; cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 0 var(--gold2);
+}
+.btn-gold:hover { transform:translateY(-2px); box-shadow:0 6px 0 var(--gold2); }
+.btn-ghost {
+  background:var(--surface2); border:1px solid var(--border); color:var(--muted);
+  font-family:'Righteous',sans-serif; font-size:16px; letter-spacing:2px;
+  padding:13px 24px; border-radius:10px; cursor:pointer; transition:all .15s;
+}
+.btn-ghost:hover { border-color:var(--gold); color:var(--gold); }
+
+/* #confetti, .cf, @keyframes cfall — from game.css */
+
+/* Token pulse animation */
+@keyframes tokenPulse {
+  0%,100% { r:14; }
+  50% { r:17; }
+}
+.active-token { animation: tokenPulse 1s ease-in-out infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* Scoring key */
+.scoring-key {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.key-row { display: flex; align-items: center; gap: 14px; }
+.key-val {
+  font-family: 'Righteous', sans-serif;
+  font-size: 28px;
+  color: white;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.key-lbl { font-size: 24px; font-weight: 700; color: white; }
+.key-miss { color: rgba(255,255,255,0.4) !important; }
+
+/* Skip/next player button */
+.skip-turn-btn {
+  margin-top: 10px;
+  width: 100%;
+  background: var(--gold);
+  border: none;
+  color: #111;
+  font-family: 'Righteous', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s;
+  box-shadow: 0 4px 0 var(--gold2);
+}
+.skip-turn-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--gold2); }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <div class="setup-logo">
+    <h1>🐍 SNAKES &amp; LADDERS</h1>
+    <p>Powered by Autodarts</p>
+  </div>
+  <div class="setup-card">
+    <h2>Players</h2>
+    <div class="player-list" id="player-list"></div>
+    <button class="add-btn" id="add-btn">+ Add Player</button>
+    <div class="dice-legend">
+      <div class="legend-row"><span class="legend-die">⚀</span><span class="legend-txt">Double ring</span></div>
+      <div class="legend-row"><span class="legend-die">⚁</span><span class="legend-txt">Outer ring</span></div>
+      <div class="legend-row"><span class="legend-die">⚂</span><span class="legend-txt">Treble ring</span></div>
+      <div class="legend-row"><span class="legend-die">⚃</span><span class="legend-txt">Inner ring</span></div>
+      <div class="legend-row"><span class="legend-die">⚄</span><span class="legend-txt">Outer Bull</span></div>
+      <div class="legend-row"><span class="legend-die">⚅</span><span class="legend-txt">Bullseye</span></div>
+      <div class="legend-note">3 darts per turn · token moves after each dart · land exactly on 65 to win</div>
+    </div>
+    <button class="start-btn" id="start-btn">GAME ON!</button>
+  </div>
+  <div class="ws-status">
+    <div class="ws-dot" id="setup-ws-dot"></div>
+    <span id="setup-ws-label">Autodarts: Not Connected</span>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="board-area">
+    <div class="board-container">
+      <svg id="board-svg" viewBox="0 0 1300 680" xmlns="http://www.w3.org/2000/svg">
+        <!-- Board outer -->
+        <rect width="1300" height="680" fill="#e8d040" rx="10"/>
+        <!-- Grid -->
+        <rect x="500.0" y="226.7" width="300.0" height="226.7" fill="#1a0828" rx="10" stroke="#6030a0" stroke-width="2"/>
+<rect x="1.0" y="567.7" width="198.0" height="111.3" fill="#f5ecd0" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="567.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="501.0" y="567.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="601.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="701.0" y="567.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="567.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1001.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1101.0" y="567.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="567.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="101.0" y="454.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="454.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="501.0" y="454.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="601.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="701.0" y="454.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="454.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1001.0" y="454.3" width="198.0" height="111.3" fill="#e8ecff" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="454.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="101.0" y="341.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="341.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="341.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1001.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1101.0" y="341.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="341.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1.0" y="227.7" width="198.0" height="111.3" fill="#e8f5e8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="227.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="227.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="227.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="227.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="227.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1001.0" y="227.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1101.0" y="227.7" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="227.7" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="101.0" y="114.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="114.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="501.0" y="114.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="601.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="701.0" y="114.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="114.3" width="198.0" height="111.3" fill="#e8f5e8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1101.0" y="114.3" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="114.3" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1.0" y="1.0" width="198.0" height="111.3" fill="#f5ecd0" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="201.0" y="1.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="301.0" y="1.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="401.0" y="1.0" width="198.0" height="111.3" fill="#e8f5e8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="601.0" y="1.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="701.0" y="1.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="801.0" y="1.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="901.0" y="1.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1001.0" y="1.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1101.0" y="1.0" width="98.0" height="111.3" fill="#f5e060" stroke="#1a1a1a" stroke-width="2.5"/>
+<rect x="1201.0" y="1.0" width="98.0" height="111.3" fill="#fffde8" stroke="#1a1a1a" stroke-width="2.5"/>
+<line x1="1106.6" y1="507.8" x2="956.6" y2="54.5" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="1093.4" y1="512.2" x2="943.4" y2="58.9" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="1097.8" y1="481.1" x2="1084.5" y2="485.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1089.0" y1="454.5" x2="1075.7" y2="458.9" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1080.2" y1="427.8" x2="1066.9" y2="432.2" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1071.4" y1="401.1" x2="1058.1" y2="405.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1062.5" y1="374.5" x2="1049.2" y2="378.9" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1053.7" y1="347.8" x2="1040.4" y2="352.2" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1044.9" y1="321.1" x2="1031.6" y2="325.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1036.1" y1="294.5" x2="1022.8" y2="298.9" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1027.2" y1="267.8" x2="1013.9" y2="272.2" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1018.4" y1="241.1" x2="1005.1" y2="245.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1009.6" y1="214.5" x2="996.3" y2="218.9" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1000.8" y1="187.8" x2="987.5" y2="192.2" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="991.9" y1="161.1" x2="978.6" y2="165.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="983.1" y1="134.5" x2="969.8" y2="138.9" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="974.3" y1="107.8" x2="961.0" y2="112.2" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="965.5" y1="81.1" x2="952.2" y2="85.5" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="455.2" y1="628.0" x2="555.2" y2="514.6" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="444.8" y1="618.7" x2="544.8" y2="505.4" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="475.2" y1="605.3" x2="464.8" y2="596.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="495.2" y1="582.6" x2="484.8" y2="573.4" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="515.2" y1="560.0" x2="504.8" y2="550.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="535.2" y1="537.3" x2="524.8" y2="528.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="855.2" y1="628.0" x2="955.2" y2="514.6" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="844.8" y1="618.7" x2="944.8" y2="505.4" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="875.2" y1="605.3" x2="864.8" y2="596.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="895.2" y1="582.6" x2="884.8" y2="573.4" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="915.2" y1="560.0" x2="904.8" y2="550.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="935.2" y1="537.3" x2="924.8" y2="528.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="155.2" y1="401.3" x2="355.2" y2="174.6" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="144.8" y1="392.0" x2="344.8" y2="165.4" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="175.2" y1="378.6" x2="164.8" y2="369.4" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="195.2" y1="356.0" x2="184.8" y2="346.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="215.2" y1="333.3" x2="204.8" y2="324.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="235.2" y1="310.6" x2="224.8" y2="301.4" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="255.2" y1="288.0" x2="244.8" y2="278.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="275.2" y1="265.3" x2="264.8" y2="256.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="295.2" y1="242.6" x2="284.8" y2="233.4" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="315.2" y1="220.0" x2="304.8" y2="210.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="335.2" y1="197.3" x2="324.8" y2="188.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="283.3" x2="1157.0" y2="56.7" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="1143.0" y1="283.3" x2="1143.0" y2="56.7" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="1157.0" y1="255.0" x2="1143.0" y2="255.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="226.7" x2="1143.0" y2="226.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="198.3" x2="1143.0" y2="198.3" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="170.0" x2="1143.0" y2="170.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="141.7" x2="1143.0" y2="141.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="113.3" x2="1143.0" y2="113.3" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="1157.0" y1="85.0" x2="1143.0" y2="85.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="257.0" y1="170.0" x2="257.0" y2="56.7" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="243.0" y1="170.0" x2="243.0" y2="56.7" stroke="#cc3300" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<line x1="257.0" y1="141.7" x2="243.0" y2="141.7" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="257.0" y1="113.3" x2="243.0" y2="113.3" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<line x1="257.0" y1="85.0" x2="243.0" y2="85.0" stroke="#cc3300" stroke-width="2.5" opacity="0.9"/>
+<path d="M500.0 56.7 C607.5 273.3 142.5 406.7 250.0 623.3" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M500.0 56.7 C607.5 273.3 142.5 406.7 250.0 623.3" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="500.0" cy="56.7" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="500.0" cy="56.7" r="4" fill="white"/>
+<path d="M1000.0 170.0 C1130.5 151.7 1119.5 415.0 1250.0 396.7" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M1000.0 170.0 C1130.5 151.7 1119.5 415.0 1250.0 396.7" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="1000.0" cy="170.0" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="1000.0" cy="170.0" r="4" fill="white"/>
+<path d="M100.0 283.3 C239.5 323.3 110.5 583.3 250.0 623.3" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M100.0 283.3 C239.5 323.3 110.5 583.3 250.0 623.3" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="100.0" cy="283.3" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="100.0" cy="283.3" r="4" fill="white"/>
+<path d="M750.0 56.7 C759.0 115.0 641.0 111.7 650.0 170.0" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M750.0 56.7 C759.0 115.0 641.0 111.7 650.0 170.0" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="750.0" cy="56.7" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="750.0" cy="56.7" r="4" fill="white"/>
+<path d="M950.0 396.7 C1043.0 423.3 957.0 596.7 1050.0 623.3" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M950.0 396.7 C1043.0 423.3 957.0 596.7 1050.0 623.3" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="950.0" cy="396.7" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="950.0" cy="396.7" r="4" fill="white"/>
+<path d="M750.0 510.0 C759.0 568.3 641.0 565.0 650.0 623.3" stroke="#22aa22" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+<path d="M750.0 510.0 C759.0 568.3 641.0 565.0 650.0 623.3" stroke="#88ee88" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="4,10"/>
+<circle cx="750.0" cy="510.0" r="10" fill="#22aa22" stroke="white" stroke-width="2"/>
+<circle cx="750.0" cy="510.0" r="4" fill="white"/>
+<text x="100.0" y="616.3" text-anchor="middle" font-size="36" font-weight="900" font-family="Righteous,sans-serif" fill="#2a6a2a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">START</text>
+<text x="100.0" y="654.0" text-anchor="middle" font-size="44" font-family="sans-serif">&#x27A1;</text>
+<text x="250.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">1</text>
+<text x="350.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">2</text>
+<text x="450.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">3</text>
+<text x="550.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">4</text>
+<text x="650.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">5</text>
+<text x="750.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">6</text>
+<text x="850.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">7</text>
+<text x="950.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">8</text>
+<text x="1050.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">9</text>
+<text x="1150.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">10</text>
+<text x="1250.0" y="632.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">11</text>
+<text x="50.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">23</text>
+<text x="150.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">22</text>
+<text x="250.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">21</text>
+<text x="350.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">20</text>
+<text x="450.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">19</text>
+<text x="550.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">18</text>
+<text x="650.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">17</text>
+<text x="750.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">16</text>
+<text x="850.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">15</text>
+<text x="950.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">14</text>
+<text x="1006.0" y="469.3" font-size="11" font-family="Arial" fill="transparent">13</text>
+<text x="1100.0" y="500.0" text-anchor="middle" font-size="24" font-weight="900" font-family="Righteous,sans-serif" fill="#1a1a8a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">STAIRWAY</text>
+<text x="1100.0" y="524.0" text-anchor="middle" font-size="24" font-weight="900" font-family="Righteous,sans-serif" fill="#1a1a8a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">TO HEAVEN</text>
+<text x="1250.0" y="519.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">12</text>
+<text x="50.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">24</text>
+<text x="150.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">25</text>
+<text x="250.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">26</text>
+<text x="350.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">27</text>
+<text x="450.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">28</text>
+<text x="650.0" y="288.0" text-anchor="middle" font-size="44" font-weight="900" font-family="Georgia,serif" fill="#f0c040" stroke="#1a0828" stroke-width="3" paint-order="stroke">SNAKES</text>
+<text x="650.0" y="338.0" text-anchor="middle" font-size="32" font-weight="900" font-family="Georgia,serif" fill="#d0b0ff" stroke="#1a0828" stroke-width="3" paint-order="stroke">&amp;</text>
+<text x="650.0" y="392.0" text-anchor="middle" font-size="44" font-weight="900" font-family="Georgia,serif" fill="#f0c040" stroke="#1a0828" stroke-width="3" paint-order="stroke">LADDERS</text>
+<text x="850.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">29</text>
+<text x="950.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">30</text>
+<text x="1050.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">31</text>
+<text x="1150.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">32</text>
+<text x="1250.0" y="405.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">33</text>
+<text x="6.0" y="242.7" font-size="11" font-family="Arial" fill="transparent">42</text>
+<text x="100.0" y="273.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">MONTY</text>
+<text x="100.0" y="297.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">PYTHON</text>
+<text x="250.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">41</text>
+<text x="350.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">40</text>
+<text x="450.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">39</text>
+<text x="850.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">38</text>
+<text x="950.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">37</text>
+<text x="1050.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">36</text>
+<text x="1150.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">35</text>
+<text x="1250.0" y="292.3" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">34</text>
+<text x="50.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">43</text>
+<text x="150.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">44</text>
+<text x="250.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">45</text>
+<text x="350.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">46</text>
+<text x="450.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">47</text>
+<text x="550.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">48</text>
+<text x="650.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">49</text>
+<text x="750.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">50</text>
+<text x="850.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">51</text>
+<text x="906.0" y="129.3" font-size="11" font-family="Arial" fill="transparent">52</text>
+<text x="1000.0" y="160.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">JAKE</text>
+<text x="1000.0" y="184.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">the SNAKE</text>
+<text x="1150.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">53</text>
+<text x="1250.0" y="179.0" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">54</text>
+<text x="100.0" y="38.7" text-anchor="middle" font-size="36" font-weight="900" font-family="Righteous,sans-serif" fill="#6a3a00" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">FINISH</text>
+<text x="100.0" y="84.7" text-anchor="middle" font-size="44">&#x1F3C6;</text>
+<text x="6.0" y="16.0" font-size="11" font-family="Arial" fill="#bbaa88">65</text>
+<text x="250.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">64</text>
+<text x="350.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">63</text>
+<text x="406.0" y="16.0" font-size="11" font-family="Arial" fill="transparent">62</text>
+<text x="500.0" y="46.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">BIG</text>
+<text x="500.0" y="70.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#1a6a1a" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">MAMBA</text>
+<text x="650.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">61</text>
+<text x="750.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">60</text>
+<text x="850.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">59</text>
+<text x="950.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">58</text>
+<text x="1050.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">57</text>
+<text x="1150.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">56</text>
+<text x="1250.0" y="65.7" text-anchor="middle" font-size="26" font-weight="900" font-family="Righteous,sans-serif" fill="#443300" stroke="#f0ead0" stroke-width="5" paint-order="stroke" stroke-linejoin="round">55</text>
+        <!-- Token layer -->
+        
+<g id="token-layer"></g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="side-panel">
+    <div class="panel-top">
+      <div class="panel-title">🐍 Snakes &amp; Ladders</div>
+      <div class="panel-ws">
+        <div class="ws-dot" id="game-ws-dot"></div>
+        <span id="game-ws-label">Manual Mode</span>
+      </div>
+    </div>
+
+    <div class="scoring-key">
+      <div class="key-row"><span class="key-val">⚀</span><span class="key-lbl">Double ring</span></div>
+      <div class="key-row"><span class="key-val">⚁</span><span class="key-lbl">Outer ring</span></div>
+      <div class="key-row"><span class="key-val">⚂</span><span class="key-lbl">Treble ring</span></div>
+      <div class="key-row"><span class="key-val">⚃</span><span class="key-lbl">Inner ring</span></div>
+      <div class="key-row"><span class="key-val">⚄</span><span class="key-lbl">Outer Bull</span></div>
+      <div class="key-row"><span class="key-val">⚅</span><span class="key-lbl">Bullseye</span></div>
+      <div class="key-row"><span class="key-val key-miss">✕</span><span class="key-lbl key-miss">Miss</span></div>
+    </div>
+
+    <div class="players-list" id="players-list"></div>
+
+    <div class="turn-banner">
+      <div class="turn-name" id="turn-name">Player 1</div>
+      <div class="turn-sub" id="turn-sub">Throw dart 1 of 3</div>
+      <button class="skip-turn-btn" onclick="skipTurn()">Next Player ▶</button>
+    </div>
+
+    <button class="quit-btn" onclick="quitGame()">↩ Quit Game</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div id="win-overlay">
+  <div class="win-card">
+    <span class="win-trophy">🏆</span>
+    <div class="win-label">Winner!</div>
+    <div class="win-name" id="win-name">Player</div>
+    <div class="win-sub" id="win-sub">Reaches square 65!</div>
+    <div class="win-btns">
+      <button class="btn-gold" onclick="nextGame()">Next Game</button>
+      <button class="btn-ghost" onclick="goHome()">Home</button>
+    </div>
+  </div>
+</div>
+
+<div id="confetti"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  BOARD DATA
+// ══════════════════════════════════════════
+const CELL_POS = {
+  1: [250.00, 623.33],
+  2: [350.00, 623.33],
+  3: [450.00, 623.33],
+  4: [550.00, 623.33],
+  5: [650.00, 623.33],
+  6: [750.00, 623.33],
+  7: [850.00, 623.33],
+  8: [950.00, 623.33],
+  9: [1050.00, 623.33],
+  10: [1150.00, 623.33],
+  11: [1250.00, 623.33],
+  12: [1250.00, 510.00],
+  13: [1100.00, 510.00],
+  14: [950.00, 510.00],
+  15: [850.00, 510.00],
+  16: [750.00, 510.00],
+  17: [650.00, 510.00],
+  18: [550.00, 510.00],
+  19: [450.00, 510.00],
+  20: [350.00, 510.00],
+  21: [250.00, 510.00],
+  22: [150.00, 510.00],
+  23: [50.00, 510.00],
+  24: [50.00, 396.67],
+  25: [150.00, 396.67],
+  26: [250.00, 396.67],
+  27: [350.00, 396.67],
+  28: [450.00, 396.67],
+  29: [850.00, 396.67],
+  30: [950.00, 396.67],
+  31: [1050.00, 396.67],
+  32: [1150.00, 396.67],
+  33: [1250.00, 396.67],
+  34: [1250.00, 283.33],
+  35: [1150.00, 283.33],
+  36: [1050.00, 283.33],
+  37: [950.00, 283.33],
+  38: [850.00, 283.33],
+  39: [450.00, 283.33],
+  40: [350.00, 283.33],
+  41: [250.00, 283.33],
+  42: [100.00, 283.33],
+  43: [50.00, 170.00],
+  44: [150.00, 170.00],
+  45: [250.00, 170.00],
+  46: [350.00, 170.00],
+  47: [450.00, 170.00],
+  48: [550.00, 170.00],
+  49: [650.00, 170.00],
+  50: [750.00, 170.00],
+  51: [850.00, 170.00],
+  52: [1000.00, 170.00],
+  53: [1150.00, 170.00],
+  54: [1250.00, 170.00],
+  55: [1250.00, 56.67],
+  56: [1150.00, 56.67],
+  57: [1050.00, 56.67],
+  58: [950.00, 56.67],
+  59: [850.00, 56.67],
+  60: [750.00, 56.67],
+  61: [650.00, 56.67],
+  62: [500.00, 56.67],
+  63: [350.00, 56.67],
+  64: [250.00, 56.67],
+  65: [100.00, 56.67],
+};
+
+
+
+// gAC, tone, noiz — from utils.js
+
+// Move tick — soft pop per square
+function sfxTick() {
+  const ctx = gAC(); const t = ctx.currentTime;
+  tone(180, 'sine', t, 0.08, 0.18, ctx);
+  tone(320, 'sine', t, 0.05, 0.08, ctx);
+}
+
+// Final square landing — more resonant thud
+function sfxLand() {
+  const ctx = gAC(); const t = ctx.currentTime;
+  tone(120, 'sine', t, 0.15, 0.3, ctx);
+  tone(240, 'sine', t, 0.08, 0.12, ctx);
+  noiz(t, 0.06, 0.12, 400, ctx);
+}
+
+// Snake — hiss + descending slide
+function sfxSnake(isNamed) {
+  const ctx = gAC(); const t = ctx.currentTime;
+  const gain = isNamed ? 0.35 : 0.22;
+  noiz(t, 0.8, gain * 0.6, 1200, ctx);
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.connect(g); g.connect(ctx.destination);
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(isNamed ? 320 : 260, t);
+  osc.frequency.exponentialRampToValueAtTime(isNamed ? 60 : 80, t + (isNamed ? 1.2 : 0.9));
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + (isNamed ? 1.3 : 1.0));
+  osc.start(t); osc.stop(t + (isNamed ? 1.4 : 1.1));
+  if (isNamed) {
+    const osc2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    osc2.connect(g2); g2.connect(ctx.destination);
+    osc2.type = 'square'; osc2.frequency.setValueAtTime(80, t + 0.2);
+    osc2.frequency.exponentialRampToValueAtTime(30, t + 1.0);
+    g2.gain.setValueAtTime(0.15, t + 0.2);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    osc2.start(t + 0.2); osc2.stop(t + 1.3);
+  }
+}
+
+// Ladder — bright ascending arpeggio
+function sfxLadder(isNamed) {
+  const ctx = gAC(); const t = ctx.currentTime;
+  const notes = isNamed ? [261.6, 329.6, 392, 523.3, 659.3] : [261.6, 329.6, 392, 523.3];
+  notes.forEach((freq, i) => {
+    tone(freq, 'triangle', t + i * 0.1, 0.25, isNamed ? 0.28 : 0.22, ctx);
+    tone(freq * 2, 'sine', t + i * 0.1, 0.15, 0.06, ctx);
+  });
+}
+
+// sfxBust — from utils.js
+
+// Win — full trumpet fanfare
+function sfxWin() {
+  const ctx = gAC(); const t = ctx.currentTime;
+  [[392,0],[392,.15],[392,.3],[523.3,.45],[392,.7],[523.3,.85],[659.3,1.1]].forEach(([freq,when]) => {
+    tone(freq, 'square', t + when, 0.3, 0.28, ctx);
+    tone(freq * 1.5, 'sine', t + when, 0.2, 0.1, ctx);
+  });
+  [523.3, 659.3, 784].forEach(freq => tone(freq, 'triangle', t + 1.5, 0.8, 0.18, ctx));
+}
+
+// Next player chime — three-note bell
+function sfxNextPlayer() {
+  const ctx = gAC(); const t = ctx.currentTime;
+  tone(523.3, 'sine', t, 0.4, 0.2, ctx);
+  tone(659.3, 'sine', t + 0.15, 0.4, 0.18, ctx);
+  tone(523.3, 'triangle', t, 0.4, 0.06, ctx);
+}
+
+const SNAKES = {62:1, 52:33, 42:1, 60:49, 30:9, 16:5};
+const LADDERS = {13:58, 3:18, 7:14, 25:46, 35:56, 45:64};
+
+
+// Score from segment
+function getScore(seg) {
+  if (!seg) return 0;
+  // Miss detection — autodarts sends misses as M0-M99, ?, empty, or "miss" in seg.name
+  const name = (seg.name || '').trim().toLowerCase();
+  if (!name || name === '?' || name === 'miss' || /^m\d+$/.test(name)) return 0;
+  const num = Number(seg.number);
+  if (!num || isNaN(num)) return 0;
+  const mul = Number(seg.multiplier || 1);
+  if (num === 25) return mul === 2 ? 6 : 5;
+  const bed = seg.bed || '';
+  if (bed === 'Double')      return 1;
+  if (bed === 'SingleOuter') return 2;
+  if (bed === 'Triple')      return 3;
+  if (bed === 'SingleInner') return 4;
+  if (mul === 2) return 1;
+  if (mul === 3) return 3;
+  return 2;
+}
+
+const SCORE_WORDS = ['Zero','One','Two','Three','Four','Five','Six'];
+
+// PLAYER_COLORS — from utils.js
+const COLORS = PLAYER_COLORS; // local alias
+const INITIALS_DEFAULT = ['R','B','G','Y','P','C'];
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let players = [];
+let currentPlayer = 0;
+let gameActive = false;
+let seenThrows = 0;
+let dartInTurn = 0; // 0,1,2 — which dart in current turn
+let processing = false; // prevent double-processing
+
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+const defaultNames = ['Player 1','Player 2','Player 3','Player 4','Player 5','Player 6'];
+
+function initSetup() {
+  addPlayerRow('Player 1'); addPlayerRow('Player 2');
+  document.getElementById('add-btn').addEventListener('click', () => {
+    if (document.querySelectorAll('.player-row').length < 6) {
+      const n = document.querySelectorAll('.player-row').length;
+      addPlayerRow(defaultNames[n] || 'Player '+(n+1));
+    }
+  });
+  document.getElementById('start-btn').addEventListener('click', startGame);
+}
+
+function addPlayerRow(name) {
+  const list = document.getElementById('player-list');
+  const idx = document.querySelectorAll('.player-row').length;
+  const color = COLORS[idx % COLORS.length];
+  const row = document.createElement('div');
+  row.className = 'player-row';
+  row.innerHTML = `<div class="color-dot" style="background:${color}"></div>
+    <input class="player-input" type="text" value="${name}" maxlength="14">
+    <button class="remove-btn">✕</button>`;
+  row.querySelector('.remove-btn').addEventListener('click', () => {
+    if (document.querySelectorAll('.player-row').length > 1) {
+      row.remove();
+      document.querySelectorAll('.player-row').forEach((r,i) => {
+        r.querySelector('.color-dot').style.background = COLORS[i%COLORS.length];
+      });
+    }
+  });
+  list.appendChild(row);
+}
+
+function startGame() {
+  const rows = document.querySelectorAll('.player-row');
+  players = Array.from(rows).map((r,i) => ({
+    name: r.querySelector('.player-input').value.trim() || 'Player '+(i+1),
+    color: COLORS[i % COLORS.length],
+    initial: (r.querySelector('.player-input').value.trim() || 'P').charAt(0).toUpperCase(),
+    square: 0,
+    darts: ['—','—','—'], // current turn dart scores
+    status: 'Ready to throw',
+  }));
+  currentPlayer = 0;
+  gameActive = true;
+  seenThrows = 0;
+  dartInTurn = 0;
+  processing = false;
+
+  showScreen('game');
+
+  drawTokens();
+  updatePanel();
+  speak(players[0].name + ', step up and throw three darts!');
+}
+
+// ══════════════════════════════════════════
+//  DART PROCESSING
+// ══════════════════════════════════════════
+function processDart(score, ringName) {
+  if (!gameActive || processing) return;
+  if (dartInTurn >= 3) return;
+
+  processing = true;
+
+  const p = players[currentPlayer];
+  const dartIdx = dartInTurn;
+  dartInTurn++;
+
+  // Store dart display
+  p.darts[dartIdx] = score > 0 ? String(score) : score === 0 ? 'MISS' : '—';
+
+  // Check bust BEFORE moving
+  if (score > 0 && p.square + score > 65) {
+    sfxBust();
+    speak('Bust');
+    p.status = 'Bust!';
+    p.darts[dartIdx] = 'BUST';
+    dartInTurn = 3; // end turn
+    drawTokens();
+    updatePanel();
+    processing = false;
+    // Wait for takeout to announce next player
+    return;
+  }
+
+  // Speak just the number (or Miss)
+  if (score === 0) {
+    speak('Miss');
+  } else {
+    speak(SCORE_WORDS[score] || String(score));
+  }
+
+  updatePanel();
+
+  setTimeout(() => {
+    if (score > 0) {
+      moveToken(currentPlayer, score, dartIdx, () => {
+        processing = false;
+        afterDart(dartIdx);
+      });
+    } else {
+      // Miss — dart used up, no move
+      processing = false;
+      afterDart(dartIdx);
+    }
+  }, 400);
+}
+
+function moveToken(playerIdx, steps, dartIdx, callback) {
+  const p = players[playerIdx];
+  const startSquare = p.square;
+  const targetSquare = startSquare + steps;
+  let currentSquare = startSquare;
+  const STEP_MS = 160; // ms per square
+
+  function stepOne() {
+    currentSquare++;
+    p.square = currentSquare;
+    const isLast = currentSquare === targetSquare;
+
+    if (isLast) {
+      sfxLand();
+    } else {
+      sfxTick();
+    }
+
+    drawTokens();
+    updatePanel();
+
+    if (!isLast) {
+      setTimeout(stepOne, STEP_MS);
+      return;
+    }
+
+    // Arrived at target — check win/snake/ladder
+    if (currentSquare === 65) {
+      callback();
+      return;
+    }
+
+    if (SNAKES[currentSquare]) {
+      const dest = SNAKES[currentSquare];
+      const isNamed = currentSquare===62||currentSquare===52||currentSquare===42;
+      const snakeName = currentSquare===62?'Big Mamba':currentSquare===52?'Jake the Snake':currentSquare===42?'Monty Python':'Snake';
+      setTimeout(() => {
+        sfxSnake(isNamed);
+        speak(snakeName);
+        p.status = snakeName + ' — down to ' + dest;
+        // Animate back down step by step
+        animateSlide(playerIdx, dest, 120, () => {
+          drawTokens(); updatePanel(); callback();
+        });
+      }, 300);
+      return;
+    }
+
+    if (LADDERS[currentSquare]) {
+      const dest = LADDERS[currentSquare];
+      const isNamed = currentSquare===13;
+      setTimeout(() => {
+        sfxLadder(isNamed);
+        speak(currentSquare===13?'Stairway to Heaven':'Ladder!');
+        p.status = 'Ladder — up to ' + dest;
+        // Animate up step by step
+        animateSlide(playerIdx, dest, 100, () => {
+          drawTokens(); updatePanel(); callback();
+        });
+      }, 300);
+      return;
+    }
+
+    callback();
+  }
+
+  // Start stepping after short delay
+  setTimeout(stepOne, 80);
+}
+
+// Animate token sliding to destination one square at a time (for snakes/ladders)
+function animateSlide(playerIdx, dest, stepMs, callback) {
+  const p = players[playerIdx];
+  function step() {
+    const going = dest > p.square ? 1 : -1;
+    p.square += going;
+    sfxTick();
+    drawTokens();
+    if (p.square === dest) {
+      sfxLand();
+      drawTokens();
+      setTimeout(callback, 200);
+    } else {
+      setTimeout(step, stepMs);
+    }
+  }
+  step();
+}
+
+function afterDart(dartIdx) {
+  const p = players[currentPlayer];
+
+  // Win check
+  if (p.square === 65) {
+    gameActive = false;
+    setTimeout(() => showWin(p), 500);
+    return;
+  }
+
+  // More darts left — just update panel, wait for next throw
+  updatePanel();
+}
+
+function skipTurn() {
+  dartInTurn = 3;
+  processing = false;
+  players[currentPlayer].darts = ['—','—','—'];
+  players[currentPlayer].status = 'Skipped';
+  advanceTurn();
+}
+
+// Called when player physically removes darts (Takeout finished event)
+// or when all 3 darts thrown manually
+function advanceTurn() {
+  if (!gameActive) return;
+  const bustOccurred = players[currentPlayer].darts.some(d => d === 'BUST');
+  currentPlayer = (currentPlayer + 1) % players.length;
+  dartInTurn = 0;
+  seenThrows = 0;
+  processing = false;
+  players[currentPlayer].darts = ['—','—','—'];
+  players[currentPlayer].status = 'Ready';
+  drawTokens();
+  updatePanel();
+  sfxNextPlayer();
+  speak(players[currentPlayer].name + ', your turn');
+}
+
+// ══════════════════════════════════════════
+//  TOKENS
+// ══════════════════════════════════════════
+function drawTokens() {
+  const layer = document.getElementById('token-layer');
+  layer.innerHTML = '';
+
+  // Group by square
+  const bySquare = {};
+  players.forEach((p,i) => {
+    const sq = p.square || 0;
+    if (!bySquare[sq]) bySquare[sq] = [];
+    bySquare[sq].push(i);
+  });
+
+  players.forEach((p,i) => {
+    const sq = p.square;
+    const pos = CELL_POS[sq] || CELL_POS[1];
+    const group = bySquare[sq] || [i];
+    const idx = group.indexOf(i);
+    const cnt = group.length;
+    const angle = (idx/cnt)*Math.PI*2 - Math.PI/2;
+    const rad = cnt > 1 ? 12 : 0;
+    const tx = pos[0] + Math.cos(angle)*rad;
+    const ty = pos[1] + Math.sin(angle)*rad;
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', tx);
+    circle.setAttribute('cy', ty);
+    circle.setAttribute('r', '14');
+    circle.setAttribute('fill', p.color);
+    circle.setAttribute('stroke', 'white');
+    circle.setAttribute('stroke-width', '2.5');
+    if (i === currentPlayer && gameActive) circle.classList.add('active-token');
+    layer.appendChild(circle);
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', tx);
+    t.setAttribute('y', ty + 5);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', '11');
+    t.setAttribute('font-weight', 'bold');
+    t.setAttribute('font-family', 'Nunito,sans-serif');
+    t.setAttribute('fill', 'white');
+    t.setAttribute('pointer-events', 'none');
+    t.textContent = p.initial;
+    layer.appendChild(t);
+  });
+}
+
+// ══════════════════════════════════════════
+//  PANEL
+// ══════════════════════════════════════════
+function updatePanel() {
+  const list = document.getElementById('players-list');
+  list.innerHTML = players.map((p,i) => {
+    const active = i === currentPlayer && gameActive;
+    return `<div class="player-card ${active?'active':''}">
+      <div class="pc-top">
+        <div class="pc-avatar" style="background:${p.color}">${p.initial}</div>
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-square" style="color:${p.color}">${p.square||'—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const cp = players[currentPlayer];
+  const tn = document.getElementById('turn-name');
+  if (tn) { tn.textContent = cp ? cp.name.toUpperCase() : ''; if (cp) tn.style.color = cp.color; }
+  const ts = document.getElementById('turn-sub');
+  if (ts && gameActive) ts.textContent = 'Throw dart ' + (dartInTurn+1) + ' of 3';
+}
+
+// ══════════════════════════════════════════
+//  WIN
+// ══════════════════════════════════════════
+function showWin(p) {
+  document.getElementById('win-name').textContent = p.name;
+  document.getElementById('win-name').style.color = p.color;
+  document.getElementById('win-sub').textContent = p.name + ' reaches square 65!';
+  document.getElementById('win-overlay').style.display = 'flex';
+  spawnConfetti();
+  speak(p.name + ' wins! Congratulations!', true);
+
+  // Flash token
+  let fl = 0;
+  const flash = setInterval(() => {
+    drawTokens();
+    const layer = document.getElementById('token-layer');
+    const circles = layer.querySelectorAll('circle');
+    const idx = players.indexOf(p);
+    if (circles[idx*2]) circles[idx*2].setAttribute('r', fl%2===0?'20':'14');
+    fl++;
+    if (fl > 10) clearInterval(flash);
+  }, 200);
+}
+
+function nextGame() {
+  document.getElementById('win-overlay').style.display = 'none';
+  document.getElementById('confetti').innerHTML = '';
+  // Rotate first player
+  const nextFirst = (currentPlayer + 1) % players.length;
+  players.forEach(p => { p.square = 0; p.darts = ['—','—','—']; p.status = 'Ready to throw'; });
+  currentPlayer = nextFirst;
+  dartInTurn = 0;
+  seenThrows = 0;
+  processing = false;
+  gameActive = true;
+  drawTokens();
+  updatePanel();
+  speak(players[nextFirst].name + ', your turn first. Game on!');
+}
+
+function goHome() {
+  document.getElementById('win-overlay').style.display = 'none';
+  document.getElementById('confetti').innerHTML = '';
+  showScreen('setup');
+  gameActive = false;
+}
+
+function quitGame() {
+  if (confirm('Quit game?')) goHome();
+}
+
+// connectWS, updateWSUI — from autodarts.js
+
+function handleWS(data) {
+  if (!data || data.type !== 'state') return;
+  const d = data.data || {};
+  const throws = d.throws;
+  const event = d.event || '';
+  const numThrows = d.numThrows !== undefined ? d.numThrows : -1;
+
+  if (gameActive) {
+    const throwCount = Array.isArray(throws) ? throws.length : 0;
+
+    // Scoring dart — new entry appeared in throws array
+    if (throwCount > seenThrows) {
+      const i = seenThrows;
+      const seg = throws[i].segment || {};
+      const score = getScore(seg);
+      const ringName = seg.number === 25 ? (seg.multiplier === 2 ? 'Double Bull' : 'Bull') : seg.bed || 'Single';
+      processDart(score, ringName);
+      seenThrows = throwCount;
+    }
+
+    // Misses appear in throws[] with seg.name like M3, M18 etc — handled by getScore()
+  }
+
+  // Takeout finished — advance to next player
+  if (event === 'Takeout finished' && numThrows === 0) {
+    seenThrows = 0;
+    if (gameActive && (dartInTurn >= 3 || players[currentPlayer].darts.some(d => d === 'BUST'))) {
+      advanceTurn();
+    }
+  }
+}
+
+// initSpeech, speak, spawnConfetti — from utils.js
+
+// ══════════════════════════════════════════
+//  MANUAL TESTING (keyboard)
+// ══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (!gameActive) return;
+  const v = parseInt(e.key);
+  if (!isNaN(v) && v >= 0 && v <= 6) {
+    const names = ['Miss','Single','Double','Treble','SingleInner','Bull','D-Bull'];
+    processDart(v, names[v]);
+  }
+  // Space or Enter = simulate takeout (advance turn after 3 darts or bust)
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (dartInTurn >= 3 || players[currentPlayer].darts.some(d => d === 'BUST')) {
+      advanceTurn();
+    }
+  }
+});
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initSetup();
+  initSpeech();
+  initAutodarts(handleWS);
+});
+</script>
+</body>
+</html>

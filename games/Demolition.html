@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💥 Demolition — Autodarts</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/game.css">
+<script src="../assets/js/autodarts.js"></script>
+<script src="../assets/js/utils.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1a0a2e;--surface:#2a1245;--surface2:#321558;--border:#4a2878;
+  --gold:#f0c040;--gold2:#a07010;--pink:#ff40b0;--teal:#40d0c0;
+  --text:#f0e8ff;--muted:#806898;--green:#40e080;--red:#e04040;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;
+  background-image:radial-gradient(ellipse at 25% 15%,rgba(120,20,200,.3),transparent 55%),
+                   radial-gradient(ellipse at 75% 85%,rgba(20,60,180,.25),transparent 55%);}
+/* .screen system — from game.css */
+#setup{flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;overflow-y:auto;}
+.logo h1{font-family:'Boogaloo',sans-serif;font-size:clamp(52px,9vw,96px);color:var(--gold);
+  text-shadow:0 4px 0 var(--gold2),0 0 60px rgba(240,192,64,.5);letter-spacing:4px;text-align:center;}
+.logo p{font-size:13px;letter-spacing:5px;color:var(--muted);text-align:center;margin-top:4px;text-transform:uppercase;}
+.setup-card{background:rgba(42,18,69,.92);border:2px solid var(--border);border-radius:16px;
+  padding:24px 32px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.setup-card h2{font-family:'Boogaloo',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px;margin-bottom:12px;}
+.option-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.option-label{font-size:15px;color:var(--muted);}
+.counter-row{display:flex;align-items:center;gap:10px;}
+.cnt-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;transition:all .15s;}
+.cnt-btn:hover{border-color:var(--gold);color:var(--gold);}
+.cnt-val{font-family:'Boogaloo',sans-serif;font-size:26px;color:var(--gold);min-width:52px;text-align:center;}
+.player-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.player-row{display:flex;gap:8px;align-items:center;}
+.color-dot{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
+/* .player-input, .remove-btn — from game.css */
+.player-input{font-family:'Nunito',sans-serif;} /* font override */
+.add-btn{width:100%;background:none;border:2px dashed rgba(255,255,255,.2);color:rgba(255,255,255,.4);
+  padding:8px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;
+  font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.add-btn:hover{border-color:var(--gold);color:var(--gold);}
+.how-to{margin:12px 0 0;font-size:13px;color:rgba(240,232,255,.5);line-height:1.8;background:rgba(0,0,0,.3);border-radius:8px;padding:10px 14px;}
+.how-to strong{color:var(--teal);}
+.start-btn{width:100%;background:linear-gradient(135deg,var(--pink),#a02070);border:none;
+  color:white;font-family:'Boogaloo',sans-serif;font-size:26px;letter-spacing:4px;
+  padding:14px;border-radius:12px;cursor:pointer;transition:all .2s;margin-top:14px;
+  box-shadow:0 6px 0 #601040;}
+.start-btn:hover{transform:translateY(-2px);}
+.ws-status{font-size:12px;letter-spacing:2px;color:var(--muted);display:flex;align-items:center;gap:8px;text-transform:uppercase;}
+/* .ws-dot — from game.css */
+#game{flex-direction:row;align-items:stretch;}
+.towers-area{flex:1;display:flex;align-items:center;justify-content:space-evenly;padding:12px 8px;gap:4px;overflow:hidden;}
+.tower-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;min-width:0;height:100%;justify-content:flex-start;padding-top:16px;}
+.tower-score{font-family:'Boogaloo',sans-serif;font-size:clamp(32px,4vw,68px);line-height:1;text-align:center;color:white;flex-shrink:0;transition:color .3s;}
+.tower-score.active{color:var(--gold);text-shadow:0 0 20px rgba(240,192,64,.5);}
+.tower-score.checkout{color:var(--green);text-shadow:0 0 20px rgba(64,224,128,.6);}
+.tower-svg-wrap{position:relative;flex:1;display:flex;align-items:flex-start;justify-content:center;width:100%;overflow:hidden;}
+.tower-svg-wrap svg{width:auto;height:100%;max-height:calc(100vh - 110px);display:block;}
+.gem{transition:opacity .1s;}
+.gem.removing{animation:laserFade .2s ease-out forwards;}
+@keyframes laserFade{0%{opacity:1;filter:brightness(4) saturate(2);transform-box:fill-box;transform-origin:center;transform:scale(1)}40%{filter:brightness(6);transform:scale(1.2)}100%{opacity:0;transform:scale(0.2);filter:brightness(1)}}
+.gem.gone{opacity:0!important;pointer-events:none;}
+.tower-overlay{position:absolute;top:25%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:10;white-space:nowrap;}
+.bust-text{font-family:'Boogaloo',sans-serif;font-size:clamp(26px,3.5vw,52px);color:var(--red);text-shadow:0 3px 0 #800010,0 0 30px rgba(224,40,40,.8);letter-spacing:4px;opacity:0;animation:textPop .9s ease-out forwards;}
+.checkout-text{font-family:'Boogaloo',sans-serif;font-size:clamp(18px,2.5vw,38px);color:var(--green);text-shadow:0 3px 0 #006030,0 0 30px rgba(64,224,128,.8);letter-spacing:3px;opacity:0;animation:textPop 1.3s ease-out forwards;text-align:center;line-height:1.3;}
+@keyframes textPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-55%) scale(1.2)}60%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(.9)}}
+.side-panel{width:240px;flex-shrink:0;background:rgba(18,6,36,.9);border-left:2px solid var(--border);display:flex;flex-direction:column;}
+.panel-header{padding:13px 15px;border-bottom:1px solid var(--border);}
+.panel-title{font-family:'Boogaloo',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px;}
+.panel-ws{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.last-dart-area{padding:14px 15px;border-bottom:1px solid var(--border);text-align:center;}
+.last-dart-val{font-family:'Boogaloo',sans-serif;font-size:52px;color:var(--pink);text-shadow:0 0 20px rgba(255,64,176,.4);line-height:1;}
+.last-dart-lbl{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.dart-chips{display:flex;gap:5px;justify-content:center;margin-top:9px;}
+.dc{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);min-width:38px;text-align:center;transition:all .2s;}
+.dc.hit{border-color:var(--pink);color:var(--pink);background:rgba(255,64,176,.1);}
+.rules{padding:11px 15px;border-bottom:1px solid var(--border);}
+.rule{font-size:13px;color:rgba(240,232,255,.5);line-height:2;} .rule strong{color:var(--teal);}
+.turn-area{padding:13px 15px;margin-top:auto;border-top:1px solid var(--border);}
+.turn-name{font-family:'Boogaloo',sans-serif;font-size:21px;letter-spacing:2px;}
+.turn-sub{font-size:14px;color:white;margin-top:3px;}
+.skip-btn{margin-top:8px;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'Boogaloo',sans-serif;font-size:15px;letter-spacing:2px;padding:8px;border-radius:8px;cursor:pointer;transition:all .15s;}
+.skip-btn:hover{border-color:var(--gold);color:var(--gold);}
+.quit-btn{display:block;margin:0 12px 12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:6px;border-radius:6px;cursor:pointer;width:calc(100% - 24px);transition:all .15s;}
+.quit-btn:hover{color:var(--text);border-color:rgba(255,255,255,.3);}
+#sudden-death{flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(ellipse at 50% 40%,rgba(200,20,60,.3),transparent 70%);}
+.sd-title{font-family:'Boogaloo',sans-serif;font-size:clamp(48px,8vw,96px);color:var(--red);text-shadow:0 4px 0 #800010,0 0 60px rgba(224,40,40,.5);letter-spacing:4px;animation:sdPulse 1s ease-in-out infinite;}
+@keyframes sdPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.sd-sub{font-size:18px;color:var(--muted);letter-spacing:2px;text-align:center;}
+.sd-players{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+.sd-player{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:18px 24px;text-align:center;min-width:130px;transition:all .3s;}
+.sd-player.active{border-color:var(--gold);background:rgba(240,192,64,.08);box-shadow:0 0 20px rgba(240,192,64,.2);}
+.sd-avatar{width:44px;height:44px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white;}
+.sd-name{font-family:'Boogaloo',sans-serif;font-size:18px;margin-bottom:4px;}
+.sd-score{font-family:'Boogaloo',sans-serif;font-size:38px;color:var(--gold);}
+#winner{flex-direction:column;align-items:center;justify-content:center;}
+.win-card{background:var(--surface);border:3px solid var(--gold);border-radius:20px;padding:48px 68px;text-align:center;box-shadow:0 0 80px rgba(240,192,64,.25);animation:winPop .4s cubic-bezier(.34,1.56,.64,1);}
+/* @keyframes winPop, bounce — from game.css */
+.win-trophy{font-size:72px;display:block;margin-bottom:12px;animation:bounce 1s ease-in-out infinite;}
+.win-label{font-size:12px;letter-spacing:5px;text-transform:uppercase;color:var(--muted);}
+.win-name{font-family:'Boogaloo',sans-serif;font-size:clamp(40px,7vw,80px);letter-spacing:3px;text-shadow:0 0 40px currentColor;margin:6px 0;}
+.win-sub{font-size:15px;color:var(--muted);letter-spacing:2px;margin-bottom:28px;}
+.win-btns{display:flex;gap:12px;justify-content:center;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;color:#111;font-family:'Boogaloo',sans-serif;font-size:20px;letter-spacing:3px;padding:13px 32px;border-radius:10px;cursor:pointer;transition:all .2s;box-shadow:0 4px 0 var(--gold2);}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--gold2);}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'Boogaloo',sans-serif;font-size:18px;letter-spacing:2px;padding:13px 24px;border-radius:10px;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+/* #confetti, .cf, @keyframes cfall — from game.css */
+</style>
+</head>
+<body>
+<div id="confetti"></div>
+
+<div id="setup" class="screen active">
+  <div class="logo"><h1>💥 DEMOLITION</h1><p>Powered by Autodarts</p></div>
+  <div class="setup-card">
+    <div class="option-row">
+      <span class="option-label">Starting Score</span>
+      <div class="counter-row">
+        <button class="cnt-btn" onclick="adjScore(-1)">−</button>
+        <div class="cnt-val" id="score-val">104</div>
+        <button class="cnt-btn" onclick="adjScore(1)">+</button>
+      </div>
+    </div>
+    <div class="option-row" style="margin-bottom:16px;">
+      <span class="option-label">Score Multiplier</span>
+      <div class="counter-row">
+        <button class="cnt-btn" onclick="adjMult(-1)">−</button>
+        <div class="cnt-val" id="mult-val">×1</div>
+        <button class="cnt-btn" onclick="adjMult(1)">+</button>
+      </div>
+    </div>
+    <h2>Players</h2>
+    <div class="player-list" id="player-list"></div>
+    <button class="add-btn" id="add-btn">+ Add Player</button>
+    <div class="how-to">
+      <strong>How to play:</strong><br>
+      Score on any segment — diamonds fall from the top<br>
+      Hit exactly 0 to check out · Bust if you go below<br>
+      Last player to check out loses · Tied = Sudden Death
+    </div>
+    <button class="start-btn" id="start-btn">DEMOLISH!</button>
+  </div>
+  <div class="ws-status"><div class="ws-dot" id="setup-ws-dot"></div><span id="setup-ws-label">Autodarts: Not Connected</span></div>
+</div>
+
+<div id="game" class="screen">
+  <div class="towers-area" id="towers-area"></div>
+  <div class="side-panel">
+    <div class="panel-header"><div class="panel-title">💥 Demolition</div>
+      <div class="panel-ws"><div class="ws-dot" id="game-ws-dot"></div><span id="game-ws-label">Manual Mode</span></div></div>
+    <div class="last-dart-area">
+      <div class="last-dart-val" id="last-dart-val">—</div>
+      <div class="last-dart-lbl">Last Dart</div>
+      <div class="dart-chips" id="dart-chips"><div class="dc">—</div><div class="dc">—</div><div class="dc">—</div></div>
+    </div>
+    <div class="rules">
+      <div class="rule"><strong>Any hit</strong> demolishes diamonds</div>
+      <div class="rule"><strong>Bust</strong> resets score</div>
+      <div class="rule"><strong>Exactly 0</strong> = Checked Out!</div>
+      <div class="rule"><strong>3 darts</strong> per turn</div>
+    </div>
+    <div class="turn-area">
+      <div class="turn-name" id="turn-name" style="color:var(--gold)">Player 1</div>
+      <div class="turn-sub" id="turn-sub">Throw 3 darts</div>
+      <button class="skip-btn" onclick="skipTurn()">Next Player ▶</button>
+    </div>
+    <button class="quit-btn" onclick="quitGame()">↩ Quit</button>
+  </div>
+</div>
+
+<div id="sudden-death" class="screen">
+  <div class="sd-title">⚡ SUDDEN DEATH</div>
+  <div class="sd-sub" id="sd-sub">One dart each!</div>
+  <div class="sd-players" id="sd-players"></div>
+</div>
+
+<div id="winner" class="screen">
+  <div class="win-card">
+    <span class="win-trophy">🏆</span>
+    <div class="win-label">Checked Out!</div>
+    <div class="win-name" id="win-name">Player</div>
+    <div class="win-sub">Demolition Champion!</div>
+    <div class="win-btns">
+      <button class="btn-gold" onclick="goHome()">Play Again</button>
+      <button class="btn-ghost" onclick="goHome()">Home</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ CONSTANTS ══
+const GEM_LIST = [{"id": 0, "cx": 7, "cy": 12}, {"id": 1, "cx": 21, "cy": 12}, {"id": 2, "cx": 35, "cy": 12}, {"id": 3, "cx": 49, "cy": 12}, {"id": 4, "cx": 63, "cy": 12}, {"id": 5, "cx": 77, "cy": 12}, {"id": 6, "cx": 91, "cy": 12}, {"id": 7, "cx": 105, "cy": 12}, {"id": 8, "cx": 14, "cy": 24}, {"id": 9, "cx": 28, "cy": 24}, {"id": 10, "cx": 42, "cy": 24}, {"id": 11, "cx": 56, "cy": 24}, {"id": 12, "cx": 70, "cy": 24}, {"id": 13, "cx": 84, "cy": 24}, {"id": 14, "cx": 98, "cy": 24}, {"id": 15, "cx": 7, "cy": 36}, {"id": 16, "cx": 21, "cy": 36}, {"id": 17, "cx": 35, "cy": 36}, {"id": 18, "cx": 49, "cy": 36}, {"id": 19, "cx": 63, "cy": 36}, {"id": 20, "cx": 77, "cy": 36}, {"id": 21, "cx": 91, "cy": 36}, {"id": 22, "cx": 105, "cy": 36}, {"id": 23, "cx": 14, "cy": 48}, {"id": 24, "cx": 28, "cy": 48}, {"id": 25, "cx": 42, "cy": 48}, {"id": 26, "cx": 56, "cy": 48}, {"id": 27, "cx": 70, "cy": 48}, {"id": 28, "cx": 84, "cy": 48}, {"id": 29, "cx": 98, "cy": 48}, {"id": 30, "cx": 7, "cy": 60}, {"id": 31, "cx": 21, "cy": 60}, {"id": 32, "cx": 35, "cy": 60}, {"id": 33, "cx": 49, "cy": 60}, {"id": 34, "cx": 63, "cy": 60}, {"id": 35, "cx": 77, "cy": 60}, {"id": 36, "cx": 91, "cy": 60}, {"id": 37, "cx": 105, "cy": 60}, {"id": 38, "cx": 14, "cy": 72}, {"id": 39, "cx": 28, "cy": 72}, {"id": 40, "cx": 42, "cy": 72}, {"id": 41, "cx": 56, "cy": 72}, {"id": 42, "cx": 70, "cy": 72}, {"id": 43, "cx": 84, "cy": 72}, {"id": 44, "cx": 98, "cy": 72}, {"id": 45, "cx": 7, "cy": 84}, {"id": 46, "cx": 21, "cy": 84}, {"id": 47, "cx": 35, "cy": 84}, {"id": 48, "cx": 49, "cy": 84}, {"id": 49, "cx": 63, "cy": 84}, {"id": 50, "cx": 77, "cy": 84}, {"id": 51, "cx": 91, "cy": 84}, {"id": 52, "cx": 105, "cy": 84}, {"id": 53, "cx": 14, "cy": 96}, {"id": 54, "cx": 28, "cy": 96}, {"id": 55, "cx": 42, "cy": 96}, {"id": 56, "cx": 56, "cy": 96}, {"id": 57, "cx": 70, "cy": 96}, {"id": 58, "cx": 84, "cy": 96}, {"id": 59, "cx": 98, "cy": 96}, {"id": 60, "cx": 7, "cy": 108}, {"id": 61, "cx": 21, "cy": 108}, {"id": 62, "cx": 35, "cy": 108}, {"id": 63, "cx": 49, "cy": 108}, {"id": 64, "cx": 63, "cy": 108}, {"id": 65, "cx": 77, "cy": 108}, {"id": 66, "cx": 91, "cy": 108}, {"id": 67, "cx": 105, "cy": 108}, {"id": 68, "cx": 14, "cy": 120}, {"id": 69, "cx": 28, "cy": 120}, {"id": 70, "cx": 42, "cy": 120}, {"id": 71, "cx": 56, "cy": 120}, {"id": 72, "cx": 70, "cy": 120}, {"id": 73, "cx": 84, "cy": 120}, {"id": 74, "cx": 98, "cy": 120}, {"id": 75, "cx": 14, "cy": 132}, {"id": 76, "cx": 28, "cy": 132}, {"id": 77, "cx": 42, "cy": 132}, {"id": 78, "cx": 56, "cy": 132}, {"id": 79, "cx": 70, "cy": 132}, {"id": 80, "cx": 84, "cy": 132}, {"id": 81, "cx": 98, "cy": 132}, {"id": 82, "cx": 21, "cy": 144}, {"id": 83, "cx": 35, "cy": 144}, {"id": 84, "cx": 49, "cy": 144}, {"id": 85, "cx": 63, "cy": 144}, {"id": 86, "cx": 77, "cy": 144}, {"id": 87, "cx": 91, "cy": 144}, {"id": 88, "cx": 21, "cy": 156}, {"id": 89, "cx": 35, "cy": 156}, {"id": 90, "cx": 49, "cy": 156}, {"id": 91, "cx": 63, "cy": 156}, {"id": 92, "cx": 77, "cy": 156}, {"id": 93, "cx": 91, "cy": 156}, {"id": 94, "cx": 28, "cy": 168}, {"id": 95, "cx": 42, "cy": 168}, {"id": 96, "cx": 56, "cy": 168}, {"id": 97, "cx": 70, "cy": 168}, {"id": 98, "cx": 84, "cy": 168}, {"id": 99, "cx": 28, "cy": 180}, {"id": 100, "cx": 42, "cy": 180}, {"id": 101, "cx": 56, "cy": 180}, {"id": 102, "cx": 70, "cy": 180}, {"id": 103, "cx": 84, "cy": 180}];
+const DW=14, DH=24, HW=7, HH=12;
+const SVG_W=112, SVG_H=192;
+const FLAT_H_PX=96;
+const TOTAL_GEMS=104;
+const CLIP_PTS="0,0 112,0 112,96 56,192 0,96";
+
+// PLAYER_COLORS — from utils.js
+const GEM_PALETTES=[
+  ['#ff2888','#ff80c0','#aa0055'],
+  ['#2880ff','#80c0ff','#0050cc'],
+  ['#28d068','#80ffb0','#009940'],
+  ['#f0c040','#fff080','#b08000'],
+  ['#c028e0','#e880ff','#8000b0'],
+  ['#20c0c0','#70f0f0','#008080'],
+];
+
+// gAC, tone, noiz — from utils.js
+
+function sfxLaser(score) {
+  const ctx = gAC(), t = ctx.currentTime;
+  const dur = Math.min(0.08 + score * 0.006, 0.25);
+  const startFreq = 1200 + score * 40;
+  const endFreq = 200 + score * 10;
+  const vol = Math.min(0.15 + score * 0.015, 0.45);
+  // Main laser sweep
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(startFreq, t);
+  o.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur + 0.05);
+  // High harmonic shimmer
+  const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+  o2.connect(g2); g2.connect(ctx.destination);
+  o2.type = 'sine';
+  o2.frequency.setValueAtTime(startFreq * 2, t);
+  o2.frequency.exponentialRampToValueAtTime(endFreq * 2, t + dur * 0.6);
+  g2.gain.setValueAtTime(vol * 0.4, t);
+  g2.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.6);
+  o2.start(t); o2.stop(t + dur + 0.05);
+}
+function sfxBigLaser(score) {
+  const ctx = gAC(), t = ctx.currentTime;
+  // Multiple rapid laser shots for big scores
+  const shots = Math.min(3, Math.floor(score / 10) + 1);
+  for (let i = 0; i < shots; i++) {
+    const delay = i * 0.06;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(1400 - i * 100, t + delay);
+    o.frequency.exponentialRampToValueAtTime(150, t + delay + 0.2);
+    g.gain.setValueAtTime(0.3, t + delay);
+    g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.22);
+    o.start(t + delay); o.stop(t + delay + 0.25);
+  }
+}
+
+// sfxBust, sfxCheckout, sfxWarn, sfxSD, sfxNext, dartSpeak — from utils.js
+
+// ══ STATE ══
+let startScore=104,scoreMultiplier=1;
+let players=[],cp=0,darts=[],seenThrows=0;
+let turnEnded=false,gameActive=false;
+let checkedOut=[],roundCheckedOut=[];
+let sdActive=false,sdPlayers=[],sdThrows={},sdIdx=0;
+let missTimer=null;
+// ws, wsIdx, WS — managed by autodarts.js
+// callerVoice, speechQueue, isSpeaking — managed by utils.js
+
+// ══ SETUP ══
+let _score=104,_mult=1;
+function adjScore(d){_score=Math.max(10,Math.min(999,_score+d));document.getElementById('score-val').textContent=_score;}
+function adjMult(d){_mult=Math.max(1,Math.min(5,_mult+d));document.getElementById('mult-val').textContent='×'+_mult;}
+function initSetup(){
+  addRow('Player 1');addRow('Player 2');
+  document.getElementById('add-btn').onclick=()=>{if(document.querySelectorAll('.player-row').length<6)addRow('Player '+(document.querySelectorAll('.player-row').length+1));};
+  document.getElementById('start-btn').onclick=startGame;
+}
+function addRow(name){
+  const list=document.getElementById('player-list');
+  const idx=document.querySelectorAll('.player-row').length,color=PLAYER_COLORS[idx%6];
+  const row=document.createElement('div');row.className='player-row';
+  row.innerHTML=`<div class="color-dot" style="background:${color}"></div>
+    <input class="player-input" type="text" value="${name}" maxlength="14">
+    <button class="remove-btn">✕</button>`;
+  row.querySelector('.remove-btn').onclick=()=>{
+    if(document.querySelectorAll('.player-row').length>1){
+      row.remove();
+      document.querySelectorAll('.player-row').forEach((r,i)=>r.querySelector('.color-dot').style.background=PLAYER_COLORS[i%6]);
+    }
+  };
+  list.appendChild(row);
+}
+function startGame(){
+  startScore=_score*_mult;
+  players=Array.from(document.querySelectorAll('.player-row')).map((r,i)=>{
+    const name=r.querySelector('.player-input').value.trim()||'Player '+(i+1);
+    return {id:i,name,color:PLAYER_COLORS[i%6],palette:GEM_PALETTES[i%6],
+      initial:name.charAt(0).toUpperCase(),score:startScore,turnStart:startScore,
+      darts:['—','—','—'],checkedOut:false,gemsRemoved:0};
+  });
+  cp=0;darts=[];seenThrows=0;turnEnded=false;gameActive=true;
+  checkedOut=[];roundCheckedOut=[];missTimer=null;
+  showScreen('game');buildTowers();highlightActive();updatePanel();
+  speak(players[0].name+', step up! Demolish your tower!');
+}
+
+// ══ TOWER SVG ══
+function buildTowers(){
+  const area=document.getElementById('towers-area');area.innerHTML='';
+  players.forEach((p,i)=>{
+    const [c1,c2,c3]=p.palette;
+    let paths='';
+    GEM_LIST.forEach(g=>{
+      const frac=g.cy/SVG_H;
+      const op=(0.6+frac*0.4).toFixed(2);
+      const d=`M${g.cx},${g.cy-HH} L${g.cx+HW},${g.cy} L${g.cx},${g.cy+HH} L${g.cx-HW},${g.cy}Z`;
+      paths+=`<path id="g-${i}-${g.id}" class="gem" d="${d}" fill="url(#gg-${i})" opacity="${op}"/>`;
+    });
+    const svg=`<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="gg-${i}" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="${c2}"/>
+          <stop offset="55%" stop-color="${c1}"/>
+          <stop offset="100%" stop-color="${c3}"/>
+        </radialGradient>
+        <clipPath id="cp-${i}">
+          <polygon points="${CLIP_PTS}"/>
+        </clipPath>
+      </defs>
+      <g clip-path="url(#cp-${i})">${paths}</g>
+    </svg>`;
+    const wrap=document.createElement('div');wrap.className='tower-wrap';wrap.id='tw-'+i;
+    wrap.innerHTML=`<div class="tower-score" id="ts-${i}">${p.score}</div>
+      <div class="tower-svg-wrap" id="tsw-${i}">${svg}</div>`;
+    area.appendChild(wrap);
+  });
+}
+
+// ══ DART REGISTRATION ══
+function segScore(seg){
+  if(!seg)return null;
+  const name=(seg.name||'').trim().toLowerCase();
+  if(!name||name==='?'||name==='miss'||/^m\d+$/.test(name))return null;
+  const num=Number(seg.number);if(!num||isNaN(num))return null;
+  return{score:num*Number(seg.multiplier||1),seg};
+}
+
+function registerDart(score,seg){
+  if(!gameActive||turnEnded||darts.length>=3)return;
+  const isMiss=(score===null||score===0);
+  const s=isMiss?0:score;
+  const display=isMiss?'Miss':dartSpeak(seg);
+  darts.push({score:s,display,isMiss});
+  updateDartDisplay(s,display);
+  speak(display);
+  if(isMiss){checkAfterDart();return;}
+  const p=players[cp];
+  const soFar=darts.reduce((a,d)=>a+d.score,0);
+  const newScore=p.turnStart-soFar;
+  if(newScore<0){
+    turnEnded=true;sfxBust();speak('Bust!');
+    p.score=p.turnStart;showOverlay(cp,'bust');updateScore(cp);
+    setTimeout(()=>restoreGems(cp),350);return;
+  }
+  s>=6?sfxBigLaser(s):sfxLaser(s);
+  removeGems(cp,s,()=>{
+    p.score=newScore;updateScore(cp);
+    if(newScore===0){handleCheckout(cp);return;}
+    if(newScore<=10)sfxWarn();
+    checkAfterDart();
+  });
+}
+
+function removeGems(pidx,count,cb){
+  const p=players[pidx];
+  const start=p.gemsRemoved,end=Math.min(start+count,GEM_LIST.length);
+  const ids=[];for(let i=start;i<end;i++)ids.push(i);
+  if(!ids.length){cb();return;}
+  p.gemsRemoved=end;
+  let done=0;
+  const stagger=count>10?10:count>5?18:32;
+  ids.forEach((id,i)=>{
+    setTimeout(()=>{
+      const el=document.getElementById(`g-${pidx}-${id}`);
+      if(el){el.classList.add('removing');setTimeout(()=>{el.classList.add('gone');el.classList.remove('removing');},200);}
+      if(++done===ids.length)setTimeout(cb,60);
+    },i*stagger);
+  });
+}
+
+function restoreGems(pidx){
+  const p=players[pidx];p.gemsRemoved=startScore-p.score;
+  GEM_LIST.forEach(g=>{
+    const el=document.getElementById(`g-${pidx}-${g.id}`);
+    if(el){
+      if(g.id<p.gemsRemoved){el.classList.add('gone');el.classList.remove('removing');}
+      else el.classList.remove('gone','removing');
+    }
+  });
+}
+
+function updateScore(idx){const el=document.getElementById('ts-'+idx);if(el)el.textContent=players[idx].score;}
+function updateDartDisplay(score,display){
+  document.getElementById('last-dart-val').textContent=score===0?'MISS':score;
+  const chips=document.querySelectorAll('.dc'),idx=darts.length-1;
+  if(chips[idx]){chips[idx].textContent=display;chips[idx].className='dc '+(score?'hit':'');}
+}
+function showOverlay(pidx,type){
+  const wrap=document.getElementById('tsw-'+pidx);if(!wrap)return;
+  const el=document.createElement('div');el.className='tower-overlay';
+  el.innerHTML=type==='bust'?'<div class="bust-text">BUST!</div>':'<div class="checkout-text">CHECKED<br>OUT!</div>';
+  wrap.appendChild(el);setTimeout(()=>el.remove(),1400);
+}
+function checkAfterDart(){updatePanel();}
+
+// ══ CHECKOUT ══
+function handleCheckout(idx){
+  const p=players[idx];p.checkedOut=true;checkedOut.push(idx);roundCheckedOut.push(idx);
+  turnEnded=true;sfxCheckout();speak(p.name+', checked out!',true);showOverlay(idx,'checkout');spawnConfetti();
+  const sc=document.getElementById('ts-'+idx);if(sc)sc.className='tower-score checkout';
+  if(players.filter(p=>!p.checkedOut).length===0)setTimeout(()=>showWin(players[checkedOut[0]]),2000);
+}
+
+function advanceTurn(){
+  if(!gameActive)return;
+  if(missTimer){clearTimeout(missTimer);missTimer=null;}
+  const rem=players.filter(p=>!p.checkedOut);
+  if(!rem.length)return;
+  if(rem.length===1&&players.length>1){setTimeout(()=>showWin(players[checkedOut[0]]),600);return;}
+  let next=(cp+1)%players.length,loops=0;
+  while(players[next].checkedOut&&loops<players.length){next=(next+1)%players.length;loops++;}
+  if(next<=cp){
+    if(roundCheckedOut.length>1){setTimeout(()=>triggerSD(roundCheckedOut.slice()),1500);return;}
+    roundCheckedOut=[];
+  }
+  cp=next;darts=[];seenThrows=0;turnEnded=false;
+  players[cp].turnStart=players[cp].score;
+  document.querySelectorAll('.dc').forEach(c=>{c.textContent='—';c.className='dc';});
+  document.getElementById('last-dart-val').textContent='—';
+  highlightActive();updatePanel();sfxNext();speak(players[cp].name+', your turn!');
+}
+function highlightActive(){
+  document.querySelectorAll('.tower-score').forEach((el,i)=>{if(!players[i].checkedOut)el.className='tower-score'+(i===cp?' active':'');});
+}
+
+// ══ SUDDEN DEATH ══
+function triggerSD(idxs){
+  sdActive=true;sdPlayers=idxs.map(i=>players[i]);sdThrows={};sdIdx=0;
+  gameActive=false;sfxSD();speak('Sudden death! One dart each!',true);
+  document.getElementById('sd-players').innerHTML=sdPlayers.map(p=>`
+    <div class="sd-player" id="sdp-${p.id}">
+      <div class="sd-avatar" style="background:${p.color}">${p.initial}</div>
+      <div class="sd-name">${p.name}</div>
+      <div class="sd-score" id="sdsc-${p.id}">?</div>
+    </div>`).join('');
+  document.getElementById('sd-sub').textContent=sdPlayers.map(p=>p.name).join(' & ')+' — one dart each!';
+  showScreen('sudden-death');setTimeout(()=>activateSD(0),1500);
+}
+function activateSD(i){
+  document.querySelectorAll('.sd-player').forEach((el,j)=>el.classList.toggle('active',j===i));
+  speak(sdPlayers[i].name+', throw!');gameActive=true;seenThrows=0;
+}
+function registerSDDart(score,seg){
+  if(!sdActive||!gameActive)return;
+  const p=sdPlayers[sdIdx];sdThrows[p.id]=score;gameActive=false;
+  const el=document.getElementById('sdsc-'+p.id);if(el)el.textContent=score;
+  speak(seg?dartSpeak(seg):String(score));
+  sdIdx++;
+  if(sdIdx<sdPlayers.length)setTimeout(()=>activateSD(sdIdx),1500);
+  else setTimeout(resolveSD,1500);
+}
+function resolveSD(){
+  const max=Math.max(...sdPlayers.map(p=>sdThrows[p.id]||0));
+  const winners=sdPlayers.filter(p=>(sdThrows[p.id]||0)===max);
+  if(winners.length>1){speak('Still tied! Throw again!',true);sdThrows={};sdIdx=0;setTimeout(()=>activateSD(0),2000);return;}
+  sdActive=false;sfxCheckout();speak(winners[0].name+' wins!',true);setTimeout(()=>showWin(winners[0]),1500);
+}
+
+// ══ WS ══
+function handleWS(data){
+  if(!data||data.type!=='state')return;
+  const d=data.data||{},throws=d.throws,event=d.event||'',numThrows=d.numThrows!==undefined?d.numThrows:-1;
+  const tc=Array.isArray(throws)?throws.length:0;
+  if(tc>seenThrows&&(gameActive||sdActive)){
+    if(missTimer){clearTimeout(missTimer);missTimer=null;}
+    const seg=throws[seenThrows].segment||{};
+    const result=segScore(seg);
+    if(sdActive)registerSDDart(result?result.score:0,result?result.seg:null);
+    else if(!turnEnded)registerDart(result?result.score:null,result?result.seg:null);
+    seenThrows=tc;
+  }
+  if(!sdActive&&gameActive&&!turnEnded&&numThrows>0&&numThrows>seenThrows&&tc===seenThrows){
+    if(!missTimer)missTimer=setTimeout(()=>{
+      missTimer=null;
+      if(seenThrows<numThrows&&!turnEnded&&gameActive){registerDart(null,null);seenThrows=numThrows;}
+    },700);
+  }
+  if(event==='Takeout finished'&&numThrows===0){
+    if(missTimer){clearTimeout(missTimer);missTimer=null;}
+    seenThrows=0;
+    if(!sdActive&&(darts.length>0||turnEnded))advanceTurn();
+  }
+}
+// connectWS, updateWSUI — from autodarts.js
+
+// ══ UI ══
+function updatePanel(){
+  const p=players[cp];if(!p)return;
+  const tn=document.getElementById('turn-name');if(tn){tn.textContent=p.name.toUpperCase();tn.style.color=p.color;}
+  const ts=document.getElementById('turn-sub');if(ts)ts.textContent=turnEnded?'Waiting for takeout...':'Dart '+(darts.length+1)+' of 3';
+}
+function showWin(w){document.getElementById('win-name').textContent=w.name;document.getElementById('win-name').style.color=w.color;sfxCheckout();spawnConfetti();showScreen('winner');}
+function skipTurn(){turnEnded=true;advanceTurn();}
+function quitGame(){if(confirm('Quit?')){gameActive=false;showScreen('setup');}}
+function goHome(){document.getElementById('confetti').innerHTML='';showScreen('setup');}
+// spawnConfetti, showScreen, initSpeech, speak — from utils.js
+
+// ══ KEYBOARD ══
+document.addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='Enter'){if(gameActive||turnEnded)advanceTurn();return;}
+  const n=parseInt(e.key);
+  if(!isNaN(n)&&n>=0&&n<=9){
+    const s=n===0?null:{number:n,multiplier:1,name:'S'+n,bed:'SingleOuter'};
+    if(sdActive)registerSDDart(n,s);else registerDart(n?n:null,s);return;
+  }
+  if(e.key==='t')registerDart(60,{number:20,multiplier:3,name:'T20',bed:'Triple'});
+  if(e.key==='d')registerDart(40,{number:20,multiplier:2,name:'D20',bed:'Double'});
+  if(e.key==='b')registerDart(50,{number:25,multiplier:2,name:'D25',bed:'Double'});
+});
+
+document.addEventListener('DOMContentLoaded',()=>{initSetup();initSpeech();initAutodarts(handleWS);});
+</script>
+</body>
+</html>

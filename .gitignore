@@ -1,0 +1,6 @@
+# Documentation — kept local, not uploaded to GitHub
+Documentation/
+
+# OS files
+.DS_Store
+Thumbs.db
