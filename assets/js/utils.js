@@ -78,13 +78,13 @@ function getEnglishVoices() {
 function initSpeech() {
   function pick() {
     const voices = window.speechSynthesis.getVoices();
-    if (!voices.length) return;
+    if (!voices.length) return false; // not ready yet
 
     // Restore saved choice
     const saved = localStorage.getItem(SPEECH_LS_KEY);
     if (saved) {
       const found = voices.find(v => v.name === saved);
-      if (found) { _callerVoice = found; _populateVoicePicker(); return; }
+      if (found) { _callerVoice = found; _populateVoicePicker(); return true; }
     }
 
     // Auto-pick best available
@@ -93,9 +93,22 @@ function initSpeech() {
       if (m) { _callerVoice = m; break; }
     }
     _populateVoicePicker();
+    return true;
   }
-  pick();
-  if ('onvoiceschanged' in window.speechSynthesis) window.speechSynthesis.onvoiceschanged = pick;
+
+  // Try immediately, then poll — Edge sometimes loads voices asynchronously
+  // and doesn't always fire onvoiceschanged reliably.
+  if (!pick()) {
+    let attempts = 0;
+    const poll = setInterval(() => {
+      if (pick() || ++attempts > 40) clearInterval(poll); // give up after 10s
+    }, 250);
+  }
+
+  // Also wire the standard event as a belt-and-braces measure
+  if ('onvoiceschanged' in window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => pick();
+  }
 }
 
 function _populateVoicePicker() {
