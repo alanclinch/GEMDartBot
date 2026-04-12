@@ -251,6 +251,16 @@ body{
 .ws-dot.on{background:var(--green);box-shadow:0 0 8px var(--green);}
 .ws-label{font-size:11px;color:var(--muted);}
 
+.voice-select{
+  width:100%;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text);
+  font-family:'Exo 2',sans-serif;font-size:12px;
+  padding:6px 8px;outline:none;cursor:pointer;
+}
+.voice-select:focus{border-color:var(--green);}
+.voice-select option{background:var(--bg2);}
+
 .start-btn{
   width:100%;max-width:680px;
   padding:15px;
@@ -578,6 +588,12 @@ body{
     <div class="ws-row">
       <div class="ws-dot" id="setup-ws-dot"></div>
       <div class="ws-label" id="setup-ws-label">Autodarts: Not Connected</div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="ws-label" style="margin-bottom:6px;letter-spacing:1px;">Caller Voice</div>
+      <select id="voice-picker" class="voice-select" onchange="setVoice(this.value)">
+        <option>Loading voices…</option>
+      </select>
     </div>
   </div>
 

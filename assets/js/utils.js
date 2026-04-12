@@ -49,20 +49,72 @@ function showScreen(id) {
 
 // ── SPEECH SYNTHESIS ─────────────────────────────────────────
 let _callerVoice = null, _speechQueue = [], _isSpeaking = false;
+const SPEECH_LS_KEY = 'dartbot_voice';
+
+// Preference order for auto-selection (first match wins):
+//   1. en-GB Natural/Neural (Edge high-quality voices)
+//   2. Any Natural/Neural English voice
+//   3. en-GB Ryan (common Edge fallback)
+//   4. Any en-GB voice
+//   5. Any English voice
+const _voicePrefs = [
+  v => v.lang === 'en-GB' && /natural|neural/i.test(v.name),
+  v => v.lang.startsWith('en') && /natural|neural/i.test(v.name),
+  v => v.lang === 'en-GB' && /ryan/i.test(v.name),
+  v => v.lang === 'en-GB',
+  v => v.lang.startsWith('en'),
+];
+
+function getEnglishVoices() {
+  return window.speechSynthesis.getVoices()
+    .filter(v => v.lang.startsWith('en'))
+    .sort((a, b) => {
+      // Natural/Neural first, then en-GB, then others
+      const score = v => (/natural|neural/i.test(v.name) ? 2 : 0) + (v.lang === 'en-GB' ? 1 : 0);
+      return score(b) - score(a);
+    });
+}
 
 function initSpeech() {
   function pick() {
     const voices = window.speechSynthesis.getVoices();
     if (!voices.length) return;
-    const prefs = [
-      v => v.lang === 'en-GB' && v.name.toLowerCase().includes('ryan'),
-      v => v.lang === 'en-GB',
-      v => v.lang.startsWith('en'),
-    ];
-    for (const fn of prefs) { const m = voices.find(fn); if (m) { _callerVoice = m; break; } }
+
+    // Restore saved choice
+    const saved = localStorage.getItem(SPEECH_LS_KEY);
+    if (saved) {
+      const found = voices.find(v => v.name === saved);
+      if (found) { _callerVoice = found; _populateVoicePicker(); return; }
+    }
+
+    // Auto-pick best available
+    for (const fn of _voicePrefs) {
+      const m = voices.find(fn);
+      if (m) { _callerVoice = m; break; }
+    }
+    _populateVoicePicker();
   }
   pick();
   if ('onvoiceschanged' in window.speechSynthesis) window.speechSynthesis.onvoiceschanged = pick;
+}
+
+function _populateVoicePicker() {
+  const sel = document.getElementById('voice-picker');
+  if (!sel) return;
+  const voices = getEnglishVoices();
+  sel.innerHTML = voices.map(v =>
+    `<option value="${v.name}" ${_callerVoice && v.name === _callerVoice.name ? 'selected' : ''}>${v.name}</option>`
+  ).join('');
+}
+
+function setVoice(name) {
+  const voices = window.speechSynthesis.getVoices();
+  const found = voices.find(v => v.name === name);
+  if (found) {
+    _callerVoice = found;
+    try { localStorage.setItem(SPEECH_LS_KEY, name); } catch {}
+    speak('Treble twenty', true); // preview
+  }
 }
 
 // priority=true clears queue first (use for bust, checkout, announcements)
