@@ -11,18 +11,21 @@
 // ═══════════════════════════════════════════════════════════
 
 // ── CPU PLAYER ROSTER ────────────────────────────────────────
-// mpr = marks-per-round; 0.9 (beginner) → 6.0 (machine)
+// Famous dart players, history and present.
+// mpr = marks-per-round; 0.9 (beginner) → 6.0 (elite)
+// Consistent across all DartBot games — if Luke Littler is
+// hardest in Cricket, he is hardest in Demolition too.
 const CPU_PLAYERS = [
-  { id:'cpu0', name:'Danny McRae',   mpr:0.9, face:{skin:'#f5c5a0',hair:'#3a1f00',eyes:'#5a3010',mouth:'sad',    style:'messy'}},
-  { id:'cpu1', name:'Wee Shuggy',    mpr:1.4, face:{skin:'#fcd5a8',hair:'#cc6600',eyes:'#224400',mouth:'grin',   style:'short'}},
-  { id:'cpu2', name:'Carol Minto',   mpr:1.9, face:{skin:'#ffe0b8',hair:'#882200',eyes:'#442200',mouth:'smile',  style:'bob'}},
-  { id:'cpu3', name:'Big Tam',       mpr:2.4, face:{skin:'#e8b090',hair:'#222222',eyes:'#1a3366',mouth:'neutral',style:'bald'}},
-  { id:'cpu4', name:'Stevie Burns',  mpr:2.9, face:{skin:'#f0c090',hair:'#554400',eyes:'#335500',mouth:'smile',  style:'short'}},
-  { id:'cpu5', name:'Nikki Sharp',   mpr:3.4, face:{skin:'#fce8c8',hair:'#111111',eyes:'#221144',mouth:'smirk', style:'long'}},
-  { id:'cpu6', name:'Rev. Wallace',  mpr:3.9, face:{skin:'#d4a870',hair:'#888888',eyes:'#334433',mouth:'neutral',style:'bald'}},
-  { id:'cpu7', name:'Franco Deluca', mpr:4.5, face:{skin:'#c89060',hair:'#111111',eyes:'#2a1100',mouth:'smirk', style:'slick'}},
-  { id:'cpu8', name:'Sandra Cole',   mpr:5.2, face:{skin:'#ffe8d0',hair:'#660033',eyes:'#003366',mouth:'smile',  style:'bob'}},
-  { id:'cpu9', name:'The Machine',   mpr:6.0, face:{skin:'#c0d8c0',hair:'#111111',eyes:'#003300',mouth:'flat',   style:'short'}},
+  { id:'cpu0', name:'Wayne Jones',        mpr:0.9, face:{skin:'#e8c090',hair:'#1a1a1a',eyes:'#3a2010',mouth:'neutral',style:'short'}},
+  { id:'cpu1', name:'Ted Hankey',         mpr:1.4, face:{skin:'#f5d0a8',hair:'#222222',eyes:'#224433',mouth:'grin',   style:'bald'}},
+  { id:'cpu2', name:'Andy Fordham',       mpr:1.9, face:{skin:'#fcd5a8',hair:'#663300',eyes:'#442200',mouth:'smile',  style:'messy'}},
+  { id:'cpu3', name:'Dennis Priestley',   mpr:2.4, face:{skin:'#e8b880',hair:'#111111',eyes:'#1a1a3a',mouth:'neutral',style:'short'}},
+  { id:'cpu4', name:'Martin Adams',       mpr:2.9, face:{skin:'#f0c890',hair:'#aaaaaa',eyes:'#335500',mouth:'smile',  style:'short'}},
+  { id:'cpu5', name:'John Lowe',          mpr:3.4, face:{skin:'#fce8c8',hair:'#999999',eyes:'#334455',mouth:'neutral',style:'bald'}},
+  { id:'cpu6', name:'Eric Bristow',       mpr:3.9, face:{skin:'#e8b070',hair:'#553311',eyes:'#334433',mouth:'smirk', style:'slick'}},
+  { id:'cpu7', name:'Gary Anderson',      mpr:4.5, face:{skin:'#f0c080',hair:'#777777',eyes:'#336699',mouth:'smile',  style:'short'}},
+  { id:'cpu8', name:'Michael van Gerwen', mpr:5.2, face:{skin:'#ffe8d0',hair:'#111111',eyes:'#113300',mouth:'smirk', style:'bald'}},
+  { id:'cpu9', name:'Luke Littler',       mpr:6.0, face:{skin:'#ffd8b0',hair:'#111111',eyes:'#113355',mouth:'smile',  style:'short'}},
 ];
 
 // ── FACE SVG GENERATOR ───────────────────────────────────────

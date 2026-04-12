@@ -77,8 +77,8 @@ body{
 }
 .setup-card h3{
   font-family:'Orbitron',monospace;
-  font-size:9px;letter-spacing:3px;
-  color:var(--muted);
+  font-size:11px;letter-spacing:3px;
+  color:#7aaa7a;
   text-transform:uppercase;
   margin-bottom:12px;
 }
@@ -100,7 +100,7 @@ body{
 .variant-btn:hover{border-color:var(--green);color:var(--text);}
 .variant-btn.sel{background:var(--green2);border-color:var(--green);color:var(--white);}
 .variant-desc{
-  margin-top:8px;font-size:11px;color:var(--muted);
+  margin-top:8px;font-size:13px;color:rgba(223,240,216,.75);
   line-height:1.6;min-height:32px;
 }
 
@@ -116,11 +116,11 @@ body{
 .pmini-wrap{width:34px;height:34px;flex-shrink:0;}
 .pmini-wrap svg{width:34px;height:34px;}
 .player-row-name{
-  font-size:13px;font-weight:700;color:var(--text);flex:1;
+  font-size:15px;font-weight:700;color:var(--text);flex:1;
 }
 .player-row-badge{
-  font-size:9px;letter-spacing:1.5px;font-weight:800;
-  padding:2px 8px;border-radius:10px;
+  font-size:10px;letter-spacing:1.5px;font-weight:800;
+  padding:2px 10px;border-radius:10px;
 }
 .badge-human{background:rgba(80,144,224,.15);color:var(--blue);border:1px solid rgba(80,144,224,.3);}
 .badge-cpu{background:rgba(200,168,75,.15);color:var(--gold);border:1px solid rgba(200,168,75,.3);}
@@ -167,16 +167,55 @@ body{
 }
 .cpu-pick-card{
   background:var(--surface);border:1px solid var(--border2);
-  border-radius:10px;padding:12px 8px 10px;
+  border-radius:10px;padding:14px 12px;
   cursor:pointer;transition:all .18s;
-  text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
+  text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;
 }
 .cpu-pick-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 20px rgba(200,168,75,.15);}
-.cpu-pick-card svg{width:50px;height:50px;}
-.cpu-pick-name{font-size:12px;font-weight:800;color:var(--text);}
-.cpu-pick-mpr{font-size:10px;color:var(--muted);}
-.cpu-mpr-bar{width:80%;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.cpu-pick-name{font-size:13px;font-weight:800;color:var(--text);}
+.cpu-pick-mpr{font-size:11px;color:#7aaa7a;font-weight:700;}
+.cpu-mpr-bar{width:90%;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;}
 .cpu-mpr-fill{height:100%;background:linear-gradient(90deg,var(--green2),var(--green));border-radius:2px;}
+
+/* Player name input in setup */
+.player-name-input{
+  flex:1;background:transparent;
+  border:none;border-bottom:1px solid var(--border2);
+  color:var(--text);font-family:'Exo 2',sans-serif;
+  font-size:15px;font-weight:700;
+  padding:4px 2px;outline:none;
+}
+.player-name-input::placeholder{color:var(--muted);}
+.player-name-input:focus{border-bottom-color:var(--green);}
+
+/* Winner screen */
+.winner-layout{
+  display:flex;flex-direction:column;align-items:center;
+  gap:18px;max-width:520px;width:92%;padding:20px;
+}
+#win-others{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:100%;
+}
+.win-other-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;padding:12px 18px;text-align:center;
+  flex:1;min-width:110px;
+}
+.win-other-name{font-size:13px;font-weight:700;color:var(--text);}
+.win-other-score{font-size:12px;color:#7aaa7a;margin-top:4px;}
+.win-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;}
+.win-btn{
+  flex:1;min-width:130px;
+  padding:13px 16px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;color:var(--text);
+  font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;
+  cursor:pointer;transition:all .2s;
+}
+.win-btn:hover{border-color:var(--green);color:var(--green);}
+.win-btn-primary{background:linear-gradient(135deg,#1a6a30,#0d3a18);border-color:var(--green);color:var(--white);}
+.win-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(61,220,106,.3);}
+.win-btn-danger:hover{border-color:var(--red);color:var(--red);}
 .cpu-modal-cancel{
   margin-top:14px;width:100%;padding:9px;
   background:none;border:1px solid var(--border2);
@@ -259,7 +298,7 @@ body{
 .sb-score-big.leading{color:var(--green);}
 .sb-mpr{
   font-family:'Share Tech Mono',monospace;
-  color:var(--muted);line-height:1;
+  color:#7aaa7a;line-height:1;
 }
 .sb-pname{
   font-size:10px;font-weight:800;
@@ -289,7 +328,9 @@ body{
   font-family:'Orbitron',monospace;font-weight:700;
   color:var(--text);
 }
-.sb-num-cell.num-closed-all{color:var(--muted);text-decoration:line-through;}
+.sb-num-cell.num-closed-all{color:var(--red);text-decoration:line-through;}
+.sb-row.all-closed{background:rgba(160,20,20,.1);}
+.sb-row.all-closed .sb-num-cell{color:var(--red);}
 
 .sb-mark-cell{
   display:flex;align-items:center;justify-content:center;
@@ -578,13 +619,20 @@ body{
 
 <!-- WINNER -->
 <div id="winner" class="screen">
-  <div class="win-card">
-    <div class="win-trophy">🏆</div>
-    <div class="win-label">WINNER</div>
-    <div class="win-name" id="win-name">—</div>
-    <div class="win-score" id="win-details">—</div>
+  <div class="winner-layout">
+    <div class="win-card">
+      <div class="win-trophy">🏆</div>
+      <div class="win-label">WINNER</div>
+      <div class="win-name" id="win-name">—</div>
+      <div class="win-score" id="win-details">—</div>
+    </div>
+    <div id="win-others"></div>
+    <div class="win-buttons">
+      <button class="win-btn win-btn-primary" onclick="nextLeg()">NEXT LEG</button>
+      <button class="win-btn" onclick="goToSetup()">ADJUST SETTINGS</button>
+      <button class="win-btn win-btn-danger" onclick="goToMenu()">MENU</button>
+    </div>
   </div>
-  <button class="play-again-btn" onclick="showScreen('setup')">PLAY AGAIN</button>
 </div>
 
 <div id="confetti"></div>
@@ -594,6 +642,36 @@ body{
 // CPU_PLAYERS, makeFaceSVG, humanAvatarSVG — from bots.js
 // PLAYER_COLORS, isMiss, segScore, dartSpeak, showScreen,
 // initSpeech, speak, gAC, tone, noiz, sfx*, spawnConfetti — from utils.js
+
+// =============================================
+// SPEECH HELPERS
+// =============================================
+// What to say when a dart lands on num with multiplier mul
+function dartName(num, mul){
+  if(num === 25) return mul === 2 ? 'Bullseye' : 'Bull';
+  if(mul === 3)  return `Treble ${num}`;
+  if(mul === 2)  return `Double ${num}`;
+  return String(num);
+}
+// Name to call out for a player (first name only for CPU)
+function playerCallName(p){
+  return p.isCpu ? p.name.split(' ')[0] : p.name;
+}
+
+// =============================================
+// FULLSCREEN
+// =============================================
+function enterFullscreen(){
+  const el = document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if(el.mozRequestFullScreen) el.mozRequestFullScreen();
+}
+function exitFullscreen(){
+  if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+  else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+}
 
 // =============================================
 // GAME CONFIG
@@ -616,6 +694,8 @@ let gameActive = false;
 let missTimer = null;
 let round = 1;
 let humanCount = 0;
+let startingPlayer = 0;  // rotates each leg
+let legNumber = 0;       // 0 = first game (random start)
 // ws, connectWS, updateWSUI — from autodarts.js
 
 function handleWS(data){
@@ -667,7 +747,6 @@ function buildCpuGrid(){
   g.innerHTML = CPU_PLAYERS.map(c => {
     const barW = Math.round((c.mpr / 6.5) * 100);
     return `<div class="cpu-pick-card" onclick="addCpuPlayer('${c.id}')">
-      ${makeFaceSVG(c.face, 50)}
       <div class="cpu-pick-name">${c.name}</div>
       <div class="cpu-pick-mpr">MPR ${c.mpr.toFixed(1)}</div>
       <div class="cpu-mpr-bar"><div class="cpu-mpr-fill" style="width:${barW}%"></div></div>
@@ -691,6 +770,11 @@ function addHumanPlayer(){
   players.push({name, color, isCpu:false, cpuData:null, score:0, marks:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, dartsThrown:0, marksThrown:0});
   renderPlayerList();
   checkStartBtn();
+  // Focus and select the new name field so user can type immediately
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.player-name-input');
+    if(inputs.length){ inputs[inputs.length-1].focus(); inputs[inputs.length-1].select(); }
+  }, 30);
 }
 
 function addCpuPlayer(id){
@@ -715,11 +799,20 @@ function renderPlayerList(){
   list.innerHTML = players.map((p,i) => `
     <div class="player-row">
       <div class="pmini-wrap">${p.isCpu ? makeFaceSVG(p.cpuData.face,34) : humanAvatarSVG(p.color,34)}</div>
-      <div class="player-row-name">${p.name}</div>
-      <div class="player-row-badge ${p.isCpu ? 'badge-cpu' : 'badge-human'}">${p.isCpu ? 'CPU' : 'HUMAN'}</div>
+      ${p.isCpu
+        ? `<div class="player-row-name">${p.name}</div>`
+        : `<input class="player-name-input" data-idx="${i}" value="${p.name.replace(/"/g,'&quot;')}" placeholder="Enter your name"/>`}
+      <div class="player-row-badge ${p.isCpu ? 'badge-cpu' : 'badge-human'}">${p.isCpu ? `CPU ${p.cpuData.mpr.toFixed(1)}` : 'HUMAN'}</div>
       <button class="remove-btn" onclick="removePlayer(${i})">✕</button>
     </div>
   `).join('');
+  // Attach live name-sync to each input
+  list.querySelectorAll('.player-name-input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx);
+    inp.addEventListener('input', e => {
+      players[idx].name = e.target.value.trim() || `Player ${idx + 1}`;
+    });
+  });
   const maxed = players.length >= 4;
   document.getElementById('add-human-btn').disabled = maxed;
   document.getElementById('add-cpu-btn').disabled = maxed;
@@ -732,18 +825,29 @@ function checkStartBtn(){
 }
 
 // =============================================
-// GAME START
+// GAME START / LEG NAVIGATION
 // =============================================
 function startGame(){
   if(players.length < 2) return;
-  // Reset player state
+  // Sync names from any focused inputs before starting
+  document.querySelectorAll('.player-name-input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx);
+    if(!isNaN(idx)) players[idx].name = inp.value.trim() || `Player ${idx+1}`;
+  });
+  legNumber = 0;
+  startingPlayer = Math.floor(Math.random() * players.length);
+  launchLeg();
+}
+
+function launchLeg(){
+  document.getElementById('confetti').innerHTML = '';
   players.forEach(p => {
     p.score = 0;
     p.marks = {20:0,19:0,18:0,17:0,16:0,15:0,25:0};
     p.dartsThrown = 0;
     p.marksThrown = 0;
   });
-  currentPlayer = 0;
+  currentPlayer = startingPlayer;
   currentDarts = [];
   seenThrows = 0;
   turnEnded = false;
@@ -752,10 +856,31 @@ function startGame(){
 
   buildScoreboard();
   showScreen('game');
+  enterFullscreen();
   setTimeout(() => {
     updateScoreboard();
     startTurn();
   }, 100);
+}
+
+function nextLeg(){
+  legNumber++;
+  startingPlayer = (startingPlayer + 1) % players.length;
+  launchLeg();
+}
+
+function goToSetup(){
+  gameActive = false;
+  exitFullscreen();
+  document.getElementById('confetti').innerHTML = '';
+  showScreen('setup');
+}
+
+function goToMenu(){
+  gameActive = false;
+  exitFullscreen();
+  document.getElementById('confetti').innerHTML = '';
+  window.location.href = '../index.html';
 }
 
 // =============================================
@@ -763,7 +888,7 @@ function startGame(){
 // =============================================
 function buildScoreboard(){
   const n = players.length;
-  const numColW = 52;
+  const numColW = 64;
   const colTemplate = `${numColW}px ` + players.map(() => '1fr').join(' ');
 
   // Header
@@ -792,7 +917,7 @@ function buildScoreboard(){
     row.id = `row-${num}`;
     row.style.gridTemplateColumns = colTemplate;
 
-    let rowHTML = `<div class="sb-num-cell" id="numcell-${num}" style="font-size:${num===25?'11px':'15px'}">${num===25?'BULL':num}</div>`;
+    let rowHTML = `<div class="sb-num-cell" id="numcell-${num}" style="font-size:${num===25?'14px':'26px'}">${num===25?'BULL':num}</div>`;
     players.forEach((p,i) => {
       rowHTML += `<div class="sb-mark-cell" id="mcell-${num}-${i}">
         <div class="mark-wrap">
@@ -839,11 +964,13 @@ function updateScoreboard(){
     });
   });
 
-  // Number cells — strike through if all players closed
+  // Number cells — red + strikethrough if all players closed
   NUMBERS.forEach(num => {
     const allClosed = players.every(p => p.marks[num] >= 3);
     const nc = document.getElementById(`numcell-${num}`);
     if(nc) nc.classList.toggle('num-closed-all', allClosed);
+    const row = document.getElementById(`row-${num}`);
+    if(row) row.classList.toggle('all-closed', allClosed);
   });
 
   // Target
@@ -892,7 +1019,8 @@ function startTurn(){
   document.getElementById('turn-sub').textContent = p.isCpu ? 'Computer thinking...' : 'Throw your darts';
 
   if(p.isCpu){
-    setTimeout(() => runCpuTurn(), 1000);
+    // 3s after human removes darts before CPU starts (name call already spoken in advanceTurn)
+    setTimeout(() => runCpuTurn(), 3000);
   }
 }
 
@@ -900,18 +1028,9 @@ function advanceTurn(){
   if(!gameActive) return;
   if(missTimer){ clearTimeout(missTimer); missTimer = null; }
 
-  // announce end of turn score summary
-  const p = players[currentPlayer];
-  if(currentDarts.length > 0){
-    const pts = p.score; // current score
-    speak(`${p.name}, ${pts} points`);
-  }
-
-  // Check win
-  if(checkWin(currentPlayer)){
-    endWithWinner(currentPlayer);
-    return;
-  }
+  // Announce points scored this turn (no name, no "points")
+  const turnPts = currentDarts.reduce((s, d) => s + (d.score || 0), 0);
+  if(turnPts > 0) speak(String(turnPts));
 
   // Next player
   let next = (currentPlayer + 1) % players.length;
@@ -921,7 +1040,7 @@ function advanceTurn(){
   // Update scoreboard before announcing
   updateScoreboard();
   setTimeout(() => {
-    speak(`${players[currentPlayer].name}, your turn`);
+    speak(playerCallName(players[currentPlayer]));
     startTurn();
   }, 600);
 }
@@ -963,7 +1082,7 @@ function registerDart(seg){
     currentDarts.push({score:0, label:'Miss', num:0, mul:0});
     updateDartSlot(dartIdx, 'Miss', 'miss');
     sfxMiss();
-    speak(isMiss ? 'Miss' : String(num));
+    speak(isMiss ? 'Miss' : dartName(num, mul));
   } else {
     // Valid cricket number
     const marks = Math.min(mul, 3); // each dart gives 1-3 marks
@@ -1000,7 +1119,7 @@ function registerDart(seg){
     }
 
     // Build label
-    const label = num === 25 ? (mul===2?'Bull':'Bull') : (mul===3?`T${num}`:mul===2?`D${num}`:`${num}`);
+    const label = num === 25 ? (mul===2?'Bullseye':'Bull') : (mul===3?`T${num}`:mul===2?`D${num}`:`${num}`);
     const cssClass = scored > 0 ? 'scored' : 'hit';
     currentDarts.push({score:scored, label, num, mul});
     updateDartSlot(dartIdx, label, cssClass);
@@ -1011,24 +1130,25 @@ function registerDart(seg){
     const justClosed = !wasClosed && nowClosed;
     const justClosedAll = justClosed && othersAllClosed;
 
+    const dn = dartName(num, mul);
     if(wasClosed && !scored){
       sfxDeadDart();
-      speak(num === 25 ? 'Bull' : String(num));
+      speak(dn);
     } else if(justClosedAll){
       sfxClose();
-      speak(num === 25 ? 'Bull, closed' : `${num}, closed`);
+      speak(`${dn}, closed`);
     } else if(justClosed && scored > 0){
       sfxCloseAndScore();
-      speak(num === 25 ? 'Bull, closed, scoring' : `${num}, closed, scoring`);
+      speak(`${dn}, closed, scoring`);
     } else if(justClosed){
       sfxClose();
-      speak(num === 25 ? 'Bull, closed' : `${num}, closed`);
+      speak(`${dn}, closed`);
     } else if(scored > 0){
       sfxScore();
-      speak(num === 25 ? `Bull, ${scored} points` : `${num}, ${scored} points`);
+      speak(`${dn}`);
     } else {
       sfxHit();
-      speak(num === 25 ? 'Bull' : String(num));
+      speak(dn);
     }
 
     // Flash cell
@@ -1037,6 +1157,14 @@ function registerDart(seg){
       cell.classList.remove('just-hit','just-scored');
       void cell.offsetWidth;
       cell.classList.add(scored > 0 ? 'just-scored' : 'just-hit');
+    }
+
+    // Check win immediately on dart landing
+    if(checkWin(currentPlayer)){
+      updateScoreboard();
+      turnEnded = true;
+      endWithWinner(currentPlayer);
+      return;
     }
   }
 
@@ -1056,9 +1184,9 @@ function runCpuTurn(){
   throwCpuDart(0, () => {
     setTimeout(() => throwCpuDart(1, () => {
       setTimeout(() => throwCpuDart(2, () => {
-        setTimeout(() => advanceTurn(), 800);
-      }), 1000);
-    }), 1000);
+        setTimeout(() => advanceTurn(), 1200);
+      }), 2000);
+    }), 2000);
   });
 }
 
@@ -1116,20 +1244,35 @@ function checkWin(idx){
 
 function endWithWinner(idx){
   gameActive = false;
-  const p = players[idx];
+  const winner = players[idx];
   sfxCheckout();
-  speak(`${p.name} wins! Well played!`, true);
-  setTimeout(() => {
-    document.getElementById('win-name').textContent = p.name;
-    document.getElementById('win-details').textContent =
-      `Score: ${p.score} · MPR: ${(p.marksThrown / Math.max(1, p.dartsThrown/3)).toFixed(2)}`;
-    spawnConfetti();
-    showScreen('winner');
-  }, 1800);
+  speak(`${playerCallName(winner)} wins!`, true);
+
+  const mprOf = p => p.dartsThrown > 0
+    ? (p.marksThrown / Math.max(1, p.dartsThrown / 3)).toFixed(2)
+    : '0.00';
+
+  document.getElementById('win-name').textContent = winner.name;
+  document.getElementById('win-details').textContent =
+    `Score ${winner.score} · MPR ${mprOf(winner)}`;
+
+  // Other players below
+  document.getElementById('win-others').innerHTML = players
+    .filter((_,i) => i !== idx)
+    .map(p => `<div class="win-other-card">
+      <div class="win-other-name">${p.name}</div>
+      <div class="win-other-score">Score ${p.score} · MPR ${mprOf(p)}</div>
+    </div>`)
+    .join('');
+
+  spawnConfetti();
+  showScreen('winner');
 }
 
 function endGame(){
   gameActive = false;
+  exitFullscreen();
+  document.getElementById('confetti').innerHTML = '';
   showScreen('setup');
 }
 
