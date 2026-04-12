@@ -91,50 +91,58 @@ function humanAvatarSVG(color, size = 34) {
 // Produces a fake segment object simulating a throw at `target`
 // with accuracy scaled by `mpr` (0.9 = beginner, 6.0 = machine).
 //
-// The maths — every probability is derived from the target MPR so
-// the bot actually plays at the named skill level:
+// Maths — all probabilities derived from target MPR so bots play
+// at their named level. Includes treble, double, and single beds.
 //
-//   accuracy        = (mpr - 0.9) / 5.1           → 0..1
-//   trebleFraction  = 0.10 + accuracy × 0.65       → how much of all scoring darts are trebles
-//   scoreFactor     = 2 × trebleFraction + 1        → avg marks per scoring dart (1.2 → 2.5)
-//   scoringChance   = (mpr / 3) / scoreFactor       → P(dart scores any mark)
-//   tripleChance    = scoringChance × trebleFraction
-//   singleChance    = scoringChance × (1 - trebleFraction)
+//   accuracy    = (mpr - 0.9) / 5.1                 → 0..1
+//   singleFrac  = 0.70 - accuracy × 0.60  (min 0.10) → share of scoring darts that are singles
+//   doubleFrac  = 0.15 + accuracy × 0.05             → share that are doubles (~15-20%)
+//   tripleFrac  = 1 - singleFrac - doubleFrac         → share that are trebles
+//   avgMarks    = tripleFrac×3 + doubleFrac×2 + singleFrac×1
+//   scoringChance = (mpr/3) / avgMarks               → P(dart scores any mark)
 //
-// This guarantees: E[marks per dart] = tripleChance×3 + singleChance×1 = mpr/3  ✓
+//   E[marks/dart] = scoringChance × avgMarks = mpr/3  ✓
 //
-// Verified for the three easiest bots (old → new marks/dart):
+// Verified (old marks/dart → new):
 //   Danny McRae  0.9 MPR:  0.56 → 0.30
 //   Wee Shuggy   1.4 MPR:  0.75 → 0.47
 //   Carol Minto  1.9 MPR:  0.94 → 0.63
 function generateCpuThrow(target, mpr) {
-  const accuracy       = (mpr - 0.9) / 5.1;
-  const trebleFraction = 0.10 + accuracy * 0.65;   // 0.10 (beginner) → 0.75 (machine)
-  const scoreFactor    = 2 * trebleFraction + 1;    // avg marks per scoring dart
-  const scoringChance  = (mpr / 3) / scoreFactor;   // P(hits target for marks)
-  const tripleChance   = scoringChance * trebleFraction;
-  const singleChance   = scoringChance * (1 - trebleFraction);
-  const adjChance      = 0.15 - accuracy * 0.09;   // 0.15 (beginner) → 0.06 (machine)
-  const missChance     = 0.08 - accuracy * 0.07;   // 0.08 (beginner) → 0.01 (machine)
+  const accuracy    = (mpr - 0.9) / 5.1;
+  const singleFrac  = Math.max(0.70 - accuracy * 0.60, 0.10);
+  const doubleFrac  = 0.15 + accuracy * 0.05;
+  const tripleFrac  = 1 - singleFrac - doubleFrac;
+  const avgMarks    = tripleFrac * 3 + doubleFrac * 2 + singleFrac * 1;
+  const scoringChance = (mpr / 3) / avgMarks;
+
+  const tripleChance = scoringChance * tripleFrac;
+  const doubleChance = scoringChance * doubleFrac;
+  const singleChance = scoringChance * singleFrac;
+  const adjChance    = 0.15 - accuracy * 0.09;  // 0.15 → 0.06
+  const missChance   = 0.08 - accuracy * 0.07;  // 0.08 → 0.01
   // remainder = wasted dart on non-cricket number
 
   const r = Math.random();
   let num, mul;
 
   if (r < tripleChance) {
-    // Hit treble (or double bull for target 25)
+    // Treble — or inner bull (counts as 2 marks) for target 25
     num = target;
     mul = target === 25 ? 2 : 3;
-  } else if (r < tripleChance + singleChance) {
-    // Hit single of target
+  } else if (r < tripleChance + doubleChance) {
+    // Double — or outer bull (1 mark) for target 25
+    num = target;
+    mul = target === 25 ? 1 : 2;
+  } else if (r < tripleChance + doubleChance + singleChance) {
+    // Single of target
     num = target;
     mul = 1;
-  } else if (r < tripleChance + singleChance + adjChance) {
-    // Hit adjacent number — almost always non-cricket (0 marks), but realistic scatter
+  } else if (r < tripleChance + doubleChance + singleChance + adjChance) {
+    // Adjacent number — almost always non-cricket, realistic scatter
     const adj = getAdjacentNumbers(target);
     num = adj[Math.floor(Math.random() * adj.length)];
     mul = 1;
-  } else if (r < tripleChance + singleChance + adjChance + missChance) {
+  } else if (r < tripleChance + doubleChance + singleChance + adjChance + missChance) {
     // Off-board miss
     return null;
   } else {
